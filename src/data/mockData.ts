@@ -1,0 +1,361 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ * Pata de Perro - Mock Data & Technical Documentation Specifications
+ */
+
+import {
+  CategoriaExp,
+  EstadoReserva,
+  MoodTag,
+  Experiencia,
+  Anfitrion,
+  Reserva,
+  Turista,
+} from '../types';
+
+export interface CiudadCreativa {
+  id: string;
+  nombre: string;
+  departamento: string;
+  descripcion: string;
+  lat: number;
+  lon: number;
+  imagen: string;
+}
+
+export const CIUDADES_CREATIVAS: CiudadCreativa[] = [
+  {
+    id: 'leon',
+    nombre: 'León',
+    departamento: 'León',
+    descripcion: 'Ciudad de aprendizaje, poesía y aventura volcánica.',
+    lat: 12.4379,
+    lon: -86.878,
+    imagen: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    id: 'granada',
+    nombre: 'Granada',
+    departamento: 'Granada',
+    descripcion: 'Joyera colonial, isletas serenas y rica tradición gastronómica.',
+    lat: 11.9344,
+    lon: -85.956,
+    imagen: 'https://images.unsplash.com/photo-1518638150340-f706e86654de?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    id: 'masaya',
+    nombre: 'Masaya',
+    departamento: 'Masaya',
+    descripcion: 'Capital del folklore nicaragüense y artesanías ancestrales.',
+    lat: 11.9744,
+    lon: -86.0942,
+    imagen: 'https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    id: 'matagalpa',
+    nombre: 'Matagalpa',
+    departamento: 'Matagalpa',
+    descripcion: 'Perla del norte, rutas de café orgánico y bosques de neblina.',
+    lat: 12.9256,
+    lon: -85.9178,
+    imagen: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    id: 'ometepe',
+    nombre: 'Ometepe',
+    departamento: 'Rivas',
+    descripcion: 'Oasis de paz entre dos volcanes e íconos rupestres.',
+    lat: 11.4983,
+    lon: -85.5786,
+    imagen: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    id: 'esteli',
+    nombre: 'Estelí',
+    departamento: 'Estelí',
+    descripcion: 'Murales vibrantes, cañones naturales y cultura de montaña.',
+    lat: 13.0918,
+    lon: -86.3538,
+    imagen: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80',
+  },
+];
+
+export const INITIAL_HOSTS: Anfitrion[] = [
+  {
+    id_anfitrion: 'anf_01',
+    nombre: 'Doña María Ruiz',
+    correo: 'maria.ruiz@patadeperro.ni',
+    telefono: '+505 8812-3456',
+    bio: 'Artesana tradicional con más de 25 años moldeando cerámica barroca en San Juan de Oriente.',
+    ciudad: 'Masaya',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
+    rating: 4.9,
+    experiencias_count: 3,
+    verificado: true,
+  },
+  {
+    id_anfitrion: 'anf_02',
+    nombre: 'Don Carlos Mendoza',
+    correo: 'carlos.mendoza@patadeperro.ni',
+    telefono: '+505 8765-4321',
+    bio: 'Guía nativo de senderos ecológicos y observador de fauna en Reserva Diriangén.',
+    ciudad: 'León',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+    rating: 4.95,
+    experiencias_count: 5,
+    verificado: true,
+  },
+  {
+    id_anfitrion: 'anf_03',
+    nombre: 'Cooperativa Agua Azul',
+    correo: 'contacto@aguaazul.org',
+    telefono: '+505 8543-9988',
+    bio: 'Pescadores artesanales promotores del ecoturismo responsable en el Gran Lago de Nicaragua.',
+    ciudad: 'Ometepe',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
+    rating: 4.88,
+    experiencias_count: 2,
+    verificado: true,
+  },
+];
+
+export const INITIAL_EXPERIENCES: Experiencia[] = [
+  {
+    id_exp: 'exp_tierra_01',
+    id_anfitrion: 'anf_01',
+    anfitrion_nombre: 'Doña María Ruiz',
+    anfitrion_avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
+    categoria: CategoriaExp.TIERRA,
+    titulo: 'Taller de Cerámica Ancestral en Barro',
+    descripcion: 'Aprende a tornear, moldear y pigmentar piezas únicas con arcilla natural guiado por maestros artesanos locales.',
+    precio: 25,
+    moneda: 'USD',
+    ubicacion_nombre: 'Pueblo de San Juan de Oriente',
+    ciudad_creativa: 'Masaya',
+    ubicacion_lat: 11.9056,
+    ubicacion_lon: -86.0742,
+    recurso_ra_url: 'https://patadeperro.ni/ar/ceramica_3d.gltf',
+    imagen_url: 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=800&q=80',
+    rating: 4.9,
+    resenas_count: 38,
+    duracion: '3 Horas',
+    incluye: ['Materiales de arcilla', 'Café artesanal con rosquillas', 'Pieza terminada para llevar'],
+    moods: [MoodTag.CREATIVO, MoodTag.CULTURAL, MoodTag.TRANQUILO],
+    dificultad: 'Fácil',
+  },
+  {
+    id_exp: 'exp_tierra_02',
+    id_anfitrion: 'anf_02',
+    anfitrion_nombre: 'Don Carlos Mendoza',
+    anfitrion_avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+    categoria: CategoriaExp.TIERRA,
+    titulo: 'Senderismo Nocturno y Leyendas Volcánicas',
+    descripcion: 'Camina por senderos poco transitados bajo las estrellas mientras escuchas historias ancestrales y ves el resplandor de lava.',
+    precio: 35,
+    moneda: 'USD',
+    ubicacion_nombre: 'Faldas del Volcán Telica',
+    ciudad_creativa: 'León',
+    ubicacion_lat: 12.6025,
+    ubicacion_lon: -86.845,
+    recurso_ra_url: 'https://patadeperro.ni/ar/sendero_mapa.gltf',
+    imagen_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80',
+    rating: 4.96,
+    resenas_count: 52,
+    duracion: '4.5 Horas',
+    incluye: ['Lámpara minera', 'Guía de montaña certificado', 'Bocadillos típicos y malvaviscos'],
+    moods: [MoodTag.AVENTURERO, MoodTag.CULTURAL],
+    dificultad: 'Moderado',
+  },
+  {
+    id_exp: 'exp_agua_01',
+    id_anfitrion: 'anf_03',
+    anfitrion_nombre: 'Cooperativa Agua Azul',
+    anfitrion_avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
+    categoria: CategoriaExp.AGUA,
+    titulo: 'Ruta de Kayak por Río Istiam & Pesca Tradicional',
+    descripcion: 'Navega en aguas calmas flanqueadas por mongos y garzas, conviviendo con pescadores artesanales del istmo.',
+    precio: 30,
+    moneda: 'USD',
+    ubicacion_nombre: 'Río Istiam, Ometepe',
+    ciudad_creativa: 'Ometepe',
+    ubicacion_lat: 11.4392,
+    ubicacion_lon: -85.5417,
+    recurso_ra_url: 'https://patadeperro.ni/ar/fauna_laguna.gltf',
+    imagen_url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80',
+    rating: 4.88,
+    resenas_count: 27,
+    duracion: '3.5 Horas',
+    incluye: ['Kayak & chaleco salvavidas', 'Agua de coco fresca', 'Demostración de red de pesca'],
+    moods: [MoodTag.TRANQUILO, MoodTag.AVENTURERO],
+    dificultad: 'Fácil',
+  },
+  {
+    id_exp: 'exp_aire_01',
+    id_anfitrion: 'anf_02',
+    anfitrion_nombre: 'Don Carlos Mendoza',
+    anfitrion_avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+    categoria: CategoriaExp.AIRE,
+    titulo: 'Mirador del Sombrero & Vistas al Atardecer',
+    descripcion: 'Sube al mirador panorámico con vista panorámica de 360 grados al cañón, respirando el aire puro de las serranías.',
+    precio: 20,
+    moneda: 'USD',
+    ubicacion_nombre: 'Cañón de Somoto',
+    ciudad_creativa: 'Estelí',
+    ubicacion_lat: 13.4385,
+    ubicacion_lon: -86.581,
+    recurso_ra_url: 'https://patadeperro.ni/ar/mirador_360.gltf',
+    imagen_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
+    rating: 4.92,
+    resenas_count: 41,
+    duracion: '2.5 Horas',
+    incluye: ['Binoculares para avistamiento de aves', 'Bebida artesanal de pino', 'Fotografías digitales'],
+    moods: [MoodTag.TRANQUILO, MoodTag.AVENTURERO],
+    dificultad: 'Moderado',
+  },
+  {
+    id_exp: 'exp_tierra_03',
+    id_anfitrion: 'anf_01',
+    anfitrion_nombre: 'Doña María Ruiz',
+    anfitrion_avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
+    categoria: CategoriaExp.TIERRA,
+    titulo: 'Ruta del Cacao Orgánico y Tarta Tradicional',
+    descripcion: 'Descubre el proceso artesanal del grano a la taza de cacao sagrado, moliendo con piedra ancestral y disfrutando sabores puros.',
+    precio: 22,
+    moneda: 'USD',
+    ubicacion_nombre: 'Finca Ecoturística Selva Negra',
+    ciudad_creativa: 'Matagalpa',
+    ubicacion_lat: 12.9833,
+    ubicacion_lon: -85.9167,
+    recurso_ra_url: 'https://patadeperro.ni/ar/planta_cacao.gltf',
+    imagen_url: 'https://images.unsplash.com/photo-1511381939415-e44015466834?auto=format&fit=crop&w=800&q=80',
+    rating: 4.87,
+    resenas_count: 19,
+    duracion: '2 Horas',
+    incluye: ['Cata de 5 variedades de chocolate', 'Degustación de bebida ancestral', 'Semillas para plantar'],
+    moods: [MoodTag.GASTRONOMICO, MoodTag.CULTURAL],
+    dificultad: 'Fácil',
+  },
+];
+
+export const INITIAL_USER: Turista = {
+  id_turista: 'usr_demo_01',
+  nombre: 'Sofía Guevara',
+  correo: 'sofia.guevara@ejemplo.ni',
+  telefono: '+505 8901-2345',
+  avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80',
+  ciudad_origen: 'León',
+};
+
+export const INITIAL_RESERVATIONS: Reserva[] = [
+  {
+    id_reserva: 'res_1001',
+    id_turista: 'usr_demo_01',
+    turista_nombre: 'Sofía Guevara',
+    id_exp: 'exp_tierra_01',
+    exp_titulo: 'Taller de Cerámica Ancestral en Barro',
+    exp_imagen: 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=800&q=80',
+    exp_ciudad: 'Masaya',
+    fecha_reserva: '2026-08-15',
+    personas: 2,
+    monto_total: 50,
+    estado_reserva: EstadoReserva.CONFIRMADA,
+    codigo_confirmacion: 'PDP-882A1B',
+    contacto_whatsapp: '+505 8812-3456',
+    fecha_creacion: '2026-07-28',
+  },
+];
+
+export const TECHNICAL_DOCS = {
+  erDiagram: {
+    description: 'Diagrama Entidad-Relación Normalizado a Tercera Forma Normal (3NF) para el núcleo de datos de Pata de Perro.',
+    tables: [
+      {
+        name: 'Turista (1NF / 2NF / 3NF)',
+        pk: 'id_turista (VARCHAR 36)',
+        fields: [
+          { name: 'id_turista', type: 'VARCHAR(36)', key: 'PK', desc: 'Identificador único del viajero' },
+          { name: 'nombre', type: 'VARCHAR(100)', key: '-', desc: 'Nombre completo' },
+          { name: 'correo', type: 'VARCHAR(150)', key: 'UNIQUE', desc: 'Correo electrónico institucional / personal' },
+          { name: 'telefono', type: 'VARCHAR(20)', key: '-', desc: 'Teléfono celular para confirmaciones' },
+          { name: 'fecha_registro', type: 'TIMESTAMP', key: '-', desc: 'Fecha de alta en plataforma' },
+        ],
+      },
+      {
+        name: 'Anfitrion (1NF / 2NF / 3NF)',
+        pk: 'id_anfitrion (VARCHAR 36)',
+        fields: [
+          { name: 'id_anfitrion', type: 'VARCHAR(36)', key: 'PK', desc: 'Identificador único del emprendedor local' },
+          { name: 'nombre', type: 'VARCHAR(100)', key: '-', desc: 'Nombre o razón social' },
+          { name: 'correo', type: 'VARCHAR(150)', key: 'UNIQUE', desc: 'Contacto principal' },
+          { name: 'telefono', type: 'VARCHAR(20)', key: '-', desc: 'WhatsApp directo para gestión' },
+          { name: 'ciudad_creativa', type: 'VARCHAR(50)', key: 'FK', desc: 'Ciudad creativa base' },
+          { name: 'verificado', type: 'BOOLEAN', key: '-', desc: 'Estado de validación comunitaria' },
+        ],
+      },
+      {
+        name: 'Experiencia (1NF / 2NF / 3NF)',
+        pk: 'id_exp (VARCHAR 36)',
+        fields: [
+          { name: 'id_exp', type: 'VARCHAR(36)', key: 'PK', desc: 'ID de la actividad turística' },
+          { name: 'id_anfitrion', type: 'VARCHAR(36)', key: 'FK', desc: 'Relación 1:N con Anfitrión' },
+          { name: 'categoria', type: 'VARCHAR(20)', key: '-', desc: 'Tierra | Agua | Aire' },
+          { name: 'titulo', type: 'VARCHAR(150)', key: '-', desc: 'Título público' },
+          { name: 'descripcion', type: 'TEXT', key: '-', desc: 'Detalle de la experiencia' },
+          { name: 'precio', type: 'DECIMAL(10,2)', key: '-', desc: 'Costo unitario en USD' },
+          { name: 'ubicacion_lat', type: 'DECIMAL(10,8)', key: '-', desc: 'Latitud en coordenadas GPS WGS84' },
+          { name: 'ubicacion_lon', type: 'DECIMAL(11,8)', key: '-', desc: 'Longitud en coordenadas GPS WGS84' },
+          { name: 'recurso_ra_url', type: 'VARCHAR(255)', key: '-', desc: 'URL del modelo 3D GLTF para vista RA' },
+        ],
+      },
+      {
+        name: 'Reserva (1NF / 2NF / 3NF)',
+        pk: 'id_reserva (VARCHAR 36)',
+        fields: [
+          { name: 'id_reserva', type: 'VARCHAR(36)', key: 'PK', desc: 'ID transaccional de la reserva' },
+          { name: 'id_turista', type: 'VARCHAR(36)', key: 'FK', desc: 'Turista que solicita' },
+          { name: 'id_exp', type: 'VARCHAR(36)', key: 'FK', desc: 'Experiencia reservada' },
+          { name: 'fecha_reserva', type: 'DATE', key: '-', desc: 'Fecha agendada para la actividad' },
+          { name: 'personas', type: 'INT', key: '-', desc: 'Número de acompañantes' },
+          { name: 'monto_total', type: 'DECIMAL(10,2)', key: '-', desc: 'Total procesado' },
+          { name: 'estado_reserva', type: 'VARCHAR(20)', key: '-', desc: 'Pendiente | Confirmada | Cancelada' },
+          { name: 'codigo_confirmacion', type: 'VARCHAR(20)', key: 'UNIQUE', desc: 'Hash / Token verificador' },
+        ],
+      },
+    ],
+  },
+  activityDiagram: {
+    description: 'Flujo de Actividades del Sistema Pata de Perro (Desde Descubrimiento hasta Reserva & RA).',
+    steps: [
+      { step: 1, title: 'Inicio / Onboarding', actor: 'Turista', action: 'Navega diapositivas de bienvenida y acepta el compromiso de turismo responsable.' },
+      { step: 2, title: 'Autenticación', actor: 'Turista / Anfitrión', action: 'Inicia sesión con correo o proveedor social (Google / Apple / Facebook).' },
+      { step: 3, title: 'Exploración por Categoría o Mapa', actor: 'Turista', action: 'Filtra experiencias por "Tierra", "Agua", "Aire" o selecciona estado de ánimo ("Hoy me siento...").' },
+      { step: 4, title: 'Visualización RA', actor: 'Turista', action: 'Activa la cámara con simulación RA para previsualizar POIs y orientación geográfica.' },
+      { step: 5, title: 'Generación de Reserva', actor: 'Turista', action: 'Selecciona fecha y número de personas. El sistema calcula monto y emite código de confirmación.' },
+      { step: 6, title: 'Notificación al Anfitrión', actor: 'Anfitrión', action: 'Recibe la solicitud en su agenda y confirma la recepción vía enlace directo a WhatsApp.' },
+      { step: 7, title: 'Calificación y Reseña', actor: 'Turista', action: 'Posterior a la experiencia, evalúa con puntuación de 1 a 5 estrellas.' },
+    ],
+  },
+  faq: [
+    {
+      q: '¿Cómo garantizo la portabilidad del código entre diferentes estaciones de trabajo con GitHub?',
+      a: 'El repositorio incluye un archivo .gitignore estandarizado, scripts de npm limpios y configuración de Dockerfile. Solo requiere clonar el repo (git clone), ejecutar `npm install` o `docker-compose up` y el proyecto estará listo para desarrollo en VS Code o Visual Studio Studio.'
+    },
+    {
+      q: '¿Es compatible con Visual Studio / VS Code en Windows, Linux y macOS?',
+      a: 'Sí. Todo el código utiliza TypeScript estándar y Vite. En Visual Studio o VS Code puedes abrir la carpeta raíz directamente. Se incluyen configuraciones predeterminadas para tareas de compilación e IntelliSense.'
+    },
+    {
+      q: '¿Cómo se ejecuta el despliegue automático en la nube?',
+      a: 'El proyecto cuenta con el flujo `.github/workflows/ci-cd.yml` que ejecuta linters, compilación y empaquetado Docker en cada commit a la rama principal. Puede conectarse directamente a Cloud Run, Render o Vercel.'
+    },
+    {
+      q: '¿Qué mecanismos de seguridad se implementan para evitar corrupción de código y vulnerabilidades?',
+      a: 'Se aplica desinfección estricta contra ataques XSS, validaciones de coordenadas y montos positivos, inicialización diferida de claves de API y un sistema de Copia de Seguridad JSON con validación de integridad.'
+    },
+    {
+      q: '¿Dónde se encuentran las pruebas unitarias y cómo las ejecuto?',
+      a: 'Las pruebas unitarias están definidas en `src/__tests__/unitTests.ts`. Puedes ejecutarlas visualmente a través del "Panel de Pruebas Unitarias" integrado en la aplicación o mediante el comando `npm test` / `npm run lint` en terminal.'
+    }
+  ]
+};

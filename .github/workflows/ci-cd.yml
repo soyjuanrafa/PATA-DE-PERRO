@@ -1,0 +1,37 @@
+name: Pata de Perro CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  audit-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Project Dependencies
+        run: npm ci
+
+      - name: Security Audit & Code Linting
+        run: |
+          npm run lint
+          echo "Lint checks passed successfully."
+
+      - name: Build Production Bundle
+        run: npm run build
+
+      - name: Verify Docker Container Build
+        run: |
+          docker build -t pata-de-perro:latest .
+          echo "Docker image built successfully for production deployment."

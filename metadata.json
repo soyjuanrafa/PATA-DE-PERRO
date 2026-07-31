@@ -1,0 +1,6 @@
+{
+  "name": "Pata de Perro",
+  "description": "Plataforma de turismo auténtico y sostenible para las Ciudades Creativas de Nicaragua con navegación RA y gestión de reservas",
+  "requestFramePermissions": ["camera", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
