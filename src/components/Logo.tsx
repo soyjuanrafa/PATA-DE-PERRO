@@ -22,23 +22,24 @@ export const Logo: React.FC<LogoProps> = ({ variant = 'color', size = 'md', clas
 
   const dim = sizeMap[size];
 
-  // Colors based on brand guidelines:
-  // Green: #2E9D62
-  // Orange: #FF5722
-  // Dark text: #1E293B
-  // White: #FFFFFF
+  // Official Brand Colors from PDF:
+  // Verde Tropical: #3FAF6C
+  // Naranja Atardecer: #FF6B35
+  // Azul Petróleo: #23404A
+  // Amarillo Sol: #FFC83D
+  // Marfil: #FFF8F1
 
-  let mainColor = '#2E9D62';
-  let pinColor = '#FF5722';
-  let textColor = '#1E293B';
+  let mainColor = '#3FAF6C';
+  let pinColor = '#FF6B35';
+  let textColor = '#23404A';
 
   if (variant === 'mono') {
-    mainColor = '#1E293B';
-    pinColor = '#1E293B';
-    textColor = '#1E293B';
+    mainColor = '#23404A';
+    pinColor = '#23404A';
+    textColor = '#23404A';
   } else if (variant === 'white') {
-    mainColor = '#FFFFFF';
-    pinColor = '#FF5722';
+    mainColor = '#3FAF6C';
+    pinColor = '#FF6B35';
     textColor = '#FFFFFF';
   }
 
@@ -72,13 +73,13 @@ export const Logo: React.FC<LogoProps> = ({ variant = 'color', size = 'md', clas
         {/* Trail Curve (River/Path) */}
         <path
           d="M 55 155 C 75 140, 85 160, 105 140 C 125 120, 140 130, 145 125"
-          stroke={variant === 'white' ? '#FFFFFF' : '#FFFFFF'}
+          stroke="#FFFFFF"
           strokeWidth="8"
           strokeLinecap="round"
           fill="none"
         />
 
-        {/* Dashed Route line around paw */}
+        {/* Dashed Route line around paw in Naranja Atardecer */}
         <path
           d="M 40 150 C 40 175, 75 185, 110 185 C 140 185, 160 170, 155 150"
           stroke={pinColor}
@@ -102,21 +103,21 @@ export const Logo: React.FC<LogoProps> = ({ variant = 'color', size = 'md', clas
       {variant !== 'icon' && (
         <div className="flex flex-col leading-none tracking-tight">
           <span
-            className="font-extrabold tracking-tighter uppercase"
+            className="font-extrabold tracking-tight uppercase font-outfit"
             style={{
               fontSize: `${dim.height * 0.42}px`,
               color: textColor,
-              fontFamily: 'Outfit, Plus Jakarta Sans, sans-serif',
+              fontFamily: 'Outfit, sans-serif',
             }}
           >
             Pata
           </span>
           <span
-            className="font-extrabold tracking-tighter uppercase"
+            className="font-extrabold tracking-tight uppercase font-outfit"
             style={{
               fontSize: `${dim.height * 0.38}px`,
               color: textColor,
-              fontFamily: 'Outfit, Plus Jakarta Sans, sans-serif',
+              fontFamily: 'Outfit, sans-serif',
               marginTop: '-2px',
             }}
           >
@@ -127,3 +128,4 @@ export const Logo: React.FC<LogoProps> = ({ variant = 'color', size = 'md', clas
     </div>
   );
 };
+

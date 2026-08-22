@@ -30,6 +30,16 @@ export enum UserRole {
   ANFITRION = 'Anfitrión',
 }
 
+export interface RedesSociales {
+  instagram?: string;
+  facebook?: string;
+  tiktok?: string;
+  twitter?: string;
+  youtube?: string;
+  linkedin?: string;
+  web?: string;
+}
+
 export interface Turista {
   id_turista: string;
   nombre: string;
@@ -37,6 +47,10 @@ export interface Turista {
   telefono?: string;
   avatar?: string;
   ciudad_origen?: string;
+  bio?: string;
+  redesSociales?: RedesSociales;
+  moodsFavoritos?: MoodTag[];
+  fechaRegistro?: string;
 }
 
 export interface Anfitrion {
@@ -50,6 +64,8 @@ export interface Anfitrion {
   rating: number;
   experiencias_count: number;
   verificado: boolean;
+  redesSociales?: RedesSociales;
+  especialidad?: string;
 }
 
 export interface Experiencia {
@@ -114,6 +130,37 @@ export interface PuntoRA {
   instrucciones_ra: string;
 }
 
+export interface ChatMessage {
+  id_mensaje: string;
+  id_hilo: string;
+  emisor_id: string;
+  emisor_nombre: string;
+  emisor_rol: UserRole;
+  emisor_avatar?: string;
+  texto: string;
+  timestamp: string;
+  tipo?: 'texto' | 'ubicacion' | 'reserva_info' | 'foto';
+  leido: boolean;
+}
+
+export interface ChatThread {
+  id_hilo: string;
+  id_turista: string;
+  turista_nombre: string;
+  turista_avatar?: string;
+  id_anfitrion: string;
+  anfitrion_nombre: string;
+  anfitrion_avatar?: string;
+  id_exp?: string;
+  exp_titulo?: string;
+  exp_imagen?: string;
+  ultimo_mensaje: string;
+  ultimo_timestamp: string;
+  mensajes_no_leidos_turista: number;
+  mensajes_no_leidos_anfitrion: number;
+  mensajes: ChatMessage[];
+}
+
 export interface BackupSnapshot {
   timestamp: string;
   version: string;
@@ -122,6 +169,8 @@ export interface BackupSnapshot {
     userRole: UserRole;
     experiencias: Experiencia[];
     reservas: Reserva[];
+    savedExperienceIds?: string[];
+    chatThreads?: ChatThread[];
   };
 }
 

@@ -15,7 +15,11 @@ import { MapView } from './components/MapView';
 import { ARNavigationSim } from './components/ARNavigationSim';
 import { ReservationsView } from './components/ReservationsView';
 import { HostDashboard } from './components/HostDashboard';
+import { ProfileView } from './components/ProfileView';
+import { MessagesView } from './components/MessagesView';
+import { HelpManualView } from './components/HelpManualView';
 import { DevOptionsView } from './components/DevOptionsView';
+import { SettingsView } from './components/SettingsView';
 import { ExperienceDetailModal } from './components/ExperienceDetailModal';
 import { BookingModal } from './components/BookingModal';
 import { Sparkles, CheckCircle2 } from 'lucide-react';
@@ -39,6 +43,14 @@ const MainAppContent: React.FC = () => {
         return <ARNavigationSim />;
       case 'reservations':
         return <ReservationsView />;
+      case 'messages':
+        return <MessagesView />;
+      case 'profile':
+        return <ProfileView />;
+      case 'help':
+        return <HelpManualView />;
+      case 'settings':
+        return <SettingsView />;
       case 'host_dashboard':
         return <HostDashboard />;
       case 'dev_options':

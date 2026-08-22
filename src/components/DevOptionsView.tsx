@@ -182,10 +182,16 @@ Licenciado bajo Apache 2.0. Desarrollado para la auditoría técnica de las Ciud
 `;
 
 export const DevOptionsView: React.FC = () => {
-  const { exportBackupJSON, resetToDefaultData, showToast } = useApp();
+  const {
+    exportBackupJSON,
+    resetToDefaultData,
+    showToast,
+    isDevModeUnlocked,
+    setIsDevModeUnlocked,
+    setActiveScreen,
+  } = useApp();
 
-  // Authentication State
-  const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
+  // Authentication State (defaults to isDevModeUnlocked from context)
   const [pinInput, setPinInput] = useState<string>('');
   const [pinError, setPinError] = useState<string | null>(null);
 
@@ -204,16 +210,28 @@ export const DevOptionsView: React.FC = () => {
   } | null>(null);
   const [isRunningTests, setIsRunningTests] = useState(false);
 
-  // Handle PIN Submission
+  // Handle PIN Submission if locked
   const handlePinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (pinInput.trim() === AUTHORIZED_PIN) {
-      setIsUnlocked(true);
+      setIsDevModeUnlocked(true);
       setPinError(null);
-      showToast('🔒 Acceso concedido a Opciones de Desarrollador.');
+      setPinInput('');
+      showToast('Opciones de desarrollador activadas');
     } else {
       setPinError('PIN de seguridad incorrecto. Intente nuevamente.');
       setPinInput('');
+    }
+  };
+
+  // Toggle master developer mode switch
+  const handleToggleDevMode = () => {
+    if (isDevModeUnlocked) {
+      setIsDevModeUnlocked(false);
+      showToast('Opciones de desarrollador desactivadas');
+    } else {
+      setIsDevModeUnlocked(true);
+      showToast('Opciones de desarrollador activadas');
     }
   };
 
@@ -251,36 +269,36 @@ export const DevOptionsView: React.FC = () => {
 
   // Lock view
   const handleLock = () => {
-    setIsUnlocked(false);
+    setIsDevModeUnlocked(false);
     setPinInput('');
     setPinError(null);
-    showToast('Acceso a Opciones de Desarrollador bloqueado.');
+    showToast('Opciones de desarrollador desactivadas');
   };
 
   // Render PIN Gate Modal if not unlocked
-  if (!isUnlocked) {
+  if (!isDevModeUnlocked) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] bg-slate-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-xl border border-slate-200 text-slate-800 space-y-6">
+      <div className="min-h-[calc(100vh-4rem)] bg-stone-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border border-stone-200 text-stone-800 space-y-6 animate-in zoom-in-95">
           <div className="text-center space-y-2">
-            <div className="w-14 h-14 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-xs">
+            <div className="w-14 h-14 bg-[#FF6B35]/10 border border-[#FF6B35]/20 text-[#FF6B35] rounded-2xl flex items-center justify-center mx-auto shadow-xs">
               <KeyRound className="w-7 h-7" />
             </div>
-            <span className="inline-block px-3 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold uppercase tracking-wider">
+            <span className="inline-block px-3 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold uppercase tracking-wider">
               Acceso Restringido
             </span>
-            <h1 className="text-slate-900 font-bold text-xl sm:text-2xl tracking-tight">
+            <h1 className="text-stone-900 font-extrabold text-xl sm:text-2xl font-outfit tracking-tight">
               Opciones de Desarrollador
             </h1>
-            <p className="text-slate-500 text-xs">
-              Área protegida para personal autorizado. Ingrese el PIN de seguridad de 4 dígitos para continuar.
+            <p className="text-stone-500 text-xs">
+              Esta sección está oculta por defecto. Para activarla, toca 3 veces sobre la versión de la aplicación en <strong>Configuración → Acerca de la aplicación</strong> o ingresa el PIN de seguridad asignado.
             </p>
           </div>
 
           <form onSubmit={handlePinSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-2 text-center uppercase tracking-wider">
-                PIN de Seguridad
+              <label className="block text-xs font-bold text-stone-700 mb-2 text-center uppercase tracking-wider">
+                PIN de Seguridad (1102)
               </label>
               <input
                 id="input-dev-pin"
@@ -293,12 +311,12 @@ export const DevOptionsView: React.FC = () => {
                 }}
                 placeholder="••••"
                 autoFocus
-                className="w-full text-center text-2xl font-mono tracking-[0.5em] py-3.5 px-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:bg-white font-bold"
+                className="w-full text-center text-2xl font-mono tracking-[0.5em] py-3.5 px-4 rounded-2xl bg-stone-50 border border-stone-300 text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B35] focus:bg-white font-bold"
               />
             </div>
 
             {pinError && (
-              <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-lg text-xs font-medium flex items-center gap-2">
+              <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl text-xs font-medium flex items-center gap-2">
                 <ShieldAlert className="w-4 h-4 shrink-0" />
                 <span>{pinError}</span>
               </div>
@@ -307,17 +325,21 @@ export const DevOptionsView: React.FC = () => {
             <button
               id="btn-submit-dev-pin"
               type="submit"
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs sm:text-sm rounded-lg shadow-xs transition-colors uppercase tracking-wider flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-[#FF6B35] hover:bg-[#ff5514] text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg shadow-[#FF6B35]/25 transition-all uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer"
             >
               <Unlock className="w-4 h-4" />
               <span>Verificar PIN e Ingresar</span>
             </button>
           </form>
 
-          <div className="pt-4 border-t border-slate-100 text-center">
-            <p className="text-[11px] text-slate-400">
-              Personal autorizado: Ingrese su clave de acceso asignada.
-            </p>
+          <div className="pt-3 border-t border-stone-100 flex items-center justify-between">
+            <button
+              onClick={() => setActiveScreen('settings')}
+              className="text-xs font-bold text-stone-500 hover:text-stone-900 transition-colors"
+            >
+              ← Volver a Configuración
+            </button>
+            <span className="text-[11px] text-stone-400 font-mono">PIN: 1102</span>
           </div>
         </div>
       </div>
@@ -326,36 +348,66 @@ export const DevOptionsView: React.FC = () => {
 
   // Render Unlocked Developer Options Workspace
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 pt-6 px-4 sm:px-6 max-w-7xl mx-auto space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="min-h-screen bg-stone-50 pb-20 pt-6 px-4 sm:px-6 max-w-7xl mx-auto space-y-6">
+      {/* Top Header with Master Android Toggle */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-stone-200 shadow-sm">
         <div>
-          <div className="flex items-center gap-2 text-emerald-700 text-xs font-bold uppercase tracking-wider bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full w-fit">
+          <div className="flex items-center gap-2 text-emerald-800 text-xs font-bold uppercase tracking-wider bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full w-fit">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            Personal Autorizado • PIN Verified (1102)
+            Modo Desarrollador Activo • PIN 1102
           </div>
-          <h1 className="text-slate-900 text-2xl sm:text-3xl font-black tracking-tight pt-2">
-            Opciones de Desarrollador
+          <h1 className="text-stone-900 text-2xl sm:text-3xl font-extrabold font-outfit tracking-tight pt-2">
+            Opciones de desarrollador
           </h1>
-          <p className="text-slate-500 text-xs sm:text-sm font-medium">
+          <p className="text-stone-500 text-xs sm:text-sm font-medium">
             Centro de documentación técnica, suite de pruebas unitarias y auditoría de arquitectura.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleDownloadDoc}
-            className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 shadow-xs transition-colors"
-          >
-            <Download className="w-4 h-4" /> Descargar README & Diagramas (.md)
-          </button>
-          <button
-            onClick={handleLock}
-            className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors"
-            title="Bloquear sesión"
-          >
-            <Lock className="w-4 h-4" /> Bloquear
-          </button>
+        {/* Master Toggle Switch: Modo Desarrollador Activado / Desactivado */}
+        <div className="flex flex-wrap items-center gap-4 bg-stone-50 p-3 rounded-2xl border border-stone-200">
+          <div className="flex items-center gap-3">
+            <div>
+              <span className="block text-xs font-bold text-stone-800">Modo desarrollador</span>
+              <span className="block text-[10px] text-stone-500">
+                {isDevModeUnlocked ? 'Activado' : 'Desactivado'}
+              </span>
+            </div>
+            <button
+              id="btn-master-toggle-devmode"
+              onClick={handleToggleDevMode}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                isDevModeUnlocked ? 'bg-[#FF6B35]' : 'bg-stone-400'
+              }`}
+              role="switch"
+              aria-checked={isDevModeUnlocked}
+              title="Desactivar modo desarrollador"
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                  isDevModeUnlocked ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="h-6 w-px bg-stone-300 hidden sm:block"></div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDownloadDoc}
+              className="px-3.5 py-2 bg-[#23404A] hover:bg-[#162A31] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" /> Descargar README (.md)
+            </button>
+            <button
+              onClick={handleLock}
+              className="px-3 py-2 bg-stone-200 hover:bg-stone-300 text-stone-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Desactivar y bloquear opciones de desarrollador"
+            >
+              <Lock className="w-3.5 h-3.5" /> Desactivar
+            </button>
+          </div>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
- * Pata de Perro Header Component
+ * Pata de Perro Header Component with Official Typography & Palette
  */
 
 import React, { useState } from 'react';
@@ -14,15 +14,16 @@ import {
   MapPin,
   Calendar,
   UserCheck,
-  Code2,
-  FileCheck2,
   Lock,
-  KeyRound,
   Download,
   Menu,
   X,
   Sparkles,
-  ShieldCheck,
+  Settings,
+  Terminal,
+  User,
+  HelpCircle,
+  MessageSquare,
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -32,17 +33,26 @@ export const Header: React.FC = () => {
     userRole,
     setUserRole,
     user,
+    isDevModeUnlocked,
     exportBackupJSON,
-    resetToDefaultData,
+    totalUnreadMessagesCount,
   } = useApp();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navItems: { id: ActiveScreen; label: string; icon: React.ReactNode }[] = [
+  const navItems: { id: ActiveScreen; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: 'explore', label: 'Explorar', icon: <Compass className="w-4 h-4" /> },
     { id: 'categories', label: 'Categorías', icon: <Grid className="w-4 h-4" /> },
     { id: 'map', label: 'Mapa & RA', icon: <MapPin className="w-4 h-4" /> },
+    {
+      id: 'messages',
+      label: 'Mensajes',
+      icon: <MessageSquare className="w-4 h-4" />,
+      badge: totalUnreadMessagesCount > 0 ? totalUnreadMessagesCount : undefined,
+    },
     { id: 'reservations', label: 'Mis Reservas', icon: <Calendar className="w-4 h-4" /> },
+    { id: 'profile', label: 'Mi Perfil', icon: <User className="w-4 h-4" /> },
+    { id: 'help', label: 'Ayuda', icon: <HelpCircle className="w-4 h-4" /> },
   ];
 
   if (userRole === UserRole.ANFITRION) {
@@ -53,21 +63,28 @@ export const Header: React.FC = () => {
     });
   }
 
+  // Configuración button is always available
+  navItems.push({
+    id: 'settings',
+    label: 'Configuración',
+    icon: <Settings className="w-4 h-4" />,
+  });
+
   return (
-    <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-800 text-slate-100 shadow-md">
+    <header className="sticky top-0 z-40 bg-[#23404A] border-b border-[#162A31] text-[#FFF8F1] shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Brand Logo & Screen Switcher */}
         <button
           id="btn-header-logo"
           onClick={() => setActiveScreen('explore')}
-          className="hover:opacity-90 transition-opacity focus:outline-hidden flex items-center gap-2"
+          className="hover:opacity-90 transition-opacity focus:outline-hidden flex items-center gap-2 cursor-pointer"
           title="Ir al Inicio"
         >
           <Logo variant="white" size="sm" />
         </button>
 
         {/* Navigation items for Desktop */}
-        <nav className="hidden md:flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
+        <nav className="hidden md:flex items-center gap-1 bg-[#162A31]/70 p-1.5 rounded-full border border-white/10">
           {navItems.map(item => {
             const isActive = activeScreen === item.id;
             return (
@@ -75,21 +92,26 @@ export const Header: React.FC = () => {
                 key={item.id}
                 id={`nav-${item.id}`}
                 onClick={() => setActiveScreen(item.id)}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                className={`relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all font-outfit cursor-pointer ${
                   isActive
-                    ? 'bg-indigo-600 text-white shadow-xs'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    ? 'bg-[#FF6B35] text-white shadow-sm'
+                    : 'text-[#FFF8F1]/80 hover:text-white hover:bg-white/10'
                 }`}
               >
                 {item.icon}
-                {item.label}
+                <span>{item.label}</span>
+                {Boolean(item.badge) && (
+                  <span className="w-4 h-4 rounded-full bg-[#FF6B35] text-white text-[10px] font-black flex items-center justify-center border border-white">
+                    {item.badge}
+                  </span>
+                )}
               </button>
             );
           })}
         </nav>
 
-        {/* Right Tools (Role Switcher, Unit Tests, Tech Audit, Backup) */}
-        <div className="hidden lg:flex items-center gap-2">
+        {/* Right Tools (Role Switcher, Dev Options if unlocked, Backup) */}
+        <div className="hidden lg:flex items-center gap-2.5">
           {/* Role Toggle Switcher */}
           <button
             id="btn-toggle-role"
@@ -103,33 +125,35 @@ export const Header: React.FC = () => {
                 setActiveScreen('explore');
               }
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-indigo-300 border border-slate-700 hover:bg-slate-700 transition-colors"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#162A31] text-[#FFC83D] border border-white/10 hover:bg-[#162A31]/90 transition-colors font-ibm-plex cursor-pointer"
             title="Cambiar entre modo Turista y Anfitrión"
           >
-            <UserCheck className="w-3.5 h-3.5 text-indigo-400" />
+            <UserCheck className="w-3.5 h-3.5 text-[#3FAF6C]" />
             <span>Rol: {userRole}</span>
           </button>
 
-          {/* Opciones de Desarrollador Button (Protected by PIN 1102) */}
-          <button
-            id="btn-nav-dev-options"
-            onClick={() => setActiveScreen('dev_options')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-              activeScreen === 'dev_options' || activeScreen === 'unit_tests' || activeScreen === 'tech_docs'
-                ? 'bg-indigo-600 text-white border-indigo-500'
-                : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
-            }`}
-            title="Opciones de Desarrollador, Auditoría, README y Pruebas Unitarias (Requiere PIN 1102)"
-          >
-            <Lock className="w-3.5 h-3.5 text-amber-400" />
-            <span>Opciones de Desarrollador</span>
-          </button>
+          {/* Opciones de Desarrollador (Displayed discretely ONLY when unlocked like Android) */}
+          {isDevModeUnlocked && (
+            <button
+              id="btn-nav-dev-options"
+              onClick={() => setActiveScreen('dev_options')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all font-outfit cursor-pointer animate-in fade-in ${
+                activeScreen === 'dev_options' || activeScreen === 'unit_tests' || activeScreen === 'tech_docs'
+                  ? 'bg-[#FF6B35] text-white border-[#FF6B35] shadow-sm'
+                  : 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/80'
+              }`}
+              title="Opciones de Desarrollador activadas (Android Style)"
+            >
+              <Terminal className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Opciones de Desarrollador</span>
+            </button>
+          )}
 
           {/* Backup Action */}
           <button
             id="btn-quick-backup"
             onClick={exportBackupJSON}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors border border-slate-700"
+            className="p-2 rounded-full text-[#FFF8F1]/80 hover:text-white hover:bg-white/10 transition-colors border border-white/10 cursor-pointer"
             title="Exportar copia de seguridad JSON"
           >
             <Download className="w-4 h-4" />
@@ -141,7 +165,7 @@ export const Header: React.FC = () => {
           <button
             id="btn-mobile-menu"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg text-slate-300 hover:bg-slate-800"
+            className="p-2 rounded-full text-[#FFF8F1] hover:bg-white/10 cursor-pointer"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -150,8 +174,8 @@ export const Header: React.FC = () => {
 
       {/* Mobile Drawer Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-800 bg-slate-900 px-4 pt-2 pb-4 space-y-2">
-          <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="md:hidden border-t border-white/10 bg-[#23404A] px-4 pt-3 pb-5 space-y-3">
+          <div className="grid grid-cols-2 gap-2">
             {navItems.map(item => (
               <button
                 key={item.id}
@@ -159,19 +183,24 @@ export const Header: React.FC = () => {
                   setActiveScreen(item.id);
                   setMobileMenuOpen(false);
                 }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium w-full text-left ${
+                className={`relative flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold w-full text-left font-outfit cursor-pointer ${
                   activeScreen === item.id
-                    ? 'bg-indigo-600 text-white shadow-xs'
-                    : 'text-slate-300 bg-slate-800 border border-slate-700'
+                    ? 'bg-[#FF6B35] text-white shadow-sm'
+                    : 'text-[#FFF8F1] bg-[#162A31] border border-white/10'
                 }`}
               >
                 {item.icon}
-                {item.label}
+                <span>{item.label}</span>
+                {Boolean(item.badge) && (
+                  <span className="ml-auto w-4 h-4 rounded-full bg-[#FF6B35] text-white text-[10px] font-black flex items-center justify-center">
+                    {item.badge}
+                  </span>
+                )}
               </button>
             ))}
           </div>
 
-          <div className="pt-2 border-t border-slate-800 flex flex-wrap gap-2">
+          <div className="pt-2 border-t border-white/10 flex flex-wrap gap-2">
             <button
               onClick={() => {
                 const nextRole =
@@ -181,25 +210,28 @@ export const Header: React.FC = () => {
                 else setActiveScreen('explore');
                 setMobileMenuOpen(false);
               }}
-              className="flex-1 py-2 px-3 bg-slate-800 text-indigo-300 border border-slate-700 rounded-lg text-xs font-medium flex items-center justify-center gap-2"
+              className="flex-1 py-2 px-3 bg-[#162A31] text-[#FFC83D] border border-white/10 rounded-full text-xs font-bold flex items-center justify-center gap-2 font-ibm-plex cursor-pointer"
             >
-              <UserCheck className="w-4 h-4 text-indigo-400" />
+              <UserCheck className="w-4 h-4 text-[#3FAF6C]" />
               Rol: {userRole}
             </button>
 
-            <button
-              onClick={() => {
-                setActiveScreen('dev_options');
-                setMobileMenuOpen(false);
-              }}
-              className="py-2 px-3 bg-indigo-600 text-white rounded-lg text-xs font-medium flex items-center justify-center gap-1.5"
-            >
-              <Lock className="w-4 h-4 text-amber-300" />
-              Opciones de Desarrollador
-            </button>
+            {isDevModeUnlocked && (
+              <button
+                onClick={() => {
+                  setActiveScreen('dev_options');
+                  setMobileMenuOpen(false);
+                }}
+                className="py-2 px-4 bg-[#FF6B35] text-white rounded-full text-xs font-bold flex items-center justify-center gap-1.5 font-outfit cursor-pointer"
+              >
+                <Terminal className="w-4 h-4 text-emerald-300" />
+                Opciones de Desarrollador
+              </button>
+            )}
           </div>
         </div>
       )}
     </header>
   );
 };
+

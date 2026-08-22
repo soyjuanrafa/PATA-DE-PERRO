@@ -7,6 +7,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { CIUDADES_CREATIVAS, CiudadCreativa } from '../data/mockData';
+import { resolveImageUrl, handleImageFallback } from '../utils/imageHelper';
 import { MapPin, Navigation, Camera, Compass, Star, ChevronRight } from 'lucide-react';
 
 export const MapView: React.FC = () => {
@@ -143,7 +144,8 @@ export const MapView: React.FC = () => {
                   className="bg-stone-50 rounded-2xl p-4 border border-stone-200/80 hover:bg-amber-50/50 hover:border-amber-200 transition-all cursor-pointer flex gap-4"
                 >
                   <img
-                    src={exp.imagen_url}
+                    src={resolveImageUrl(exp.imagen_url)}
+                    onError={e => handleImageFallback(e, exp.imagen_url)}
                     alt={exp.titulo}
                     className="w-20 h-20 rounded-xl object-cover shrink-0"
                   />

@@ -7,7 +7,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronUp, ArrowRight, Sparkles } from 'lucide-react';
+import { ChevronsUp, ChevronUp } from 'lucide-react';
 
 interface SlideData {
   id: number;
@@ -56,7 +56,7 @@ export const OnboardingFlow: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] w-full bg-stone-900 overflow-hidden flex flex-col justify-between select-none">
+    <div className="relative min-h-[calc(100vh-4rem)] w-full bg-[#162A31] overflow-hidden flex flex-col justify-between select-none">
       {/* Background Fullscreen Image with Motion & Dark Vignette */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -70,31 +70,31 @@ export const OnboardingFlow: React.FC = () => {
           <img
             src={currentSlide.image}
             alt={currentSlide.alt}
-            className="w-full h-full object-cover filter brightness-[0.72] contrast-[1.05]"
+            className="w-full h-full object-cover filter brightness-[0.75] contrast-[1.05]"
           />
           {/* Subtle gradient overlay to match UI screenshot contrast */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#162A31]/95 via-black/40 to-black/30" />
         </motion.div>
       </AnimatePresence>
 
       {/* Top Header Controls */}
       <div className="relative z-10 p-6 flex justify-between items-center">
-        <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20">
-          <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-          <span className="text-white text-xs font-semibold tracking-wide">Pata de Perro</span>
+        <div className="flex items-center gap-2 bg-[#23404A]/60 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#FF6B35] animate-pulse" />
+          <span className="text-white text-xs font-bold tracking-wide font-outfit">Pata de Perro</span>
         </div>
 
         <button
           id="btn-skip-onboarding"
           onClick={() => setActiveScreen('welcome')}
-          className="text-white/80 hover:text-white text-xs font-semibold tracking-wider uppercase px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20 hover:bg-black/60 transition-all"
+          className="text-white/90 hover:text-white text-xs font-bold tracking-wider uppercase px-4 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20 hover:bg-black/60 transition-all font-outfit"
         >
           Saltar
         </button>
       </div>
 
       {/* Center Content Slide Text */}
-      <div className="relative z-10 px-8 max-w-lg mx-auto text-center my-auto">
+      <div className="relative z-10 px-8 max-w-xl mx-auto text-center my-auto">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide.id}
@@ -104,10 +104,10 @@ export const OnboardingFlow: React.FC = () => {
             transition={{ duration: 0.4 }}
             className="space-y-4"
           >
-            <p className="text-white/90 font-bold text-xs sm:text-sm tracking-widest uppercase">
+            <p className="text-[#FFC83D] font-bold text-xs sm:text-sm tracking-widest uppercase font-ibm-plex">
               {currentSlide.eyebrow}
             </p>
-            <h1 className="text-white text-2xl sm:text-4xl font-extrabold leading-tight tracking-tight drop-shadow-md">
+            <h1 className="text-white text-3xl sm:text-5xl font-extrabold leading-tight tracking-tight drop-shadow-md font-outfit">
               {currentSlide.headline}
             </h1>
           </motion.div>
@@ -122,7 +122,7 @@ export const OnboardingFlow: React.FC = () => {
             <div
               key={idx}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                idx === currentSlideIndex ? 'w-8 bg-orange-500' : 'w-2 bg-white/40'
+                idx === currentSlideIndex ? 'w-8 bg-[#FF6B35]' : 'w-2 bg-white/40'
               }`}
             />
           ))}
@@ -132,21 +132,21 @@ export const OnboardingFlow: React.FC = () => {
         <motion.div
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="relative w-20 h-36 bg-stone-200/40 backdrop-blur-md rounded-full border border-white/40 flex flex-col items-center justify-between p-2 shadow-2xl cursor-pointer"
+          className="relative w-20 h-36 bg-[#FFF8F1]/40 backdrop-blur-md rounded-full border-2 border-white/50 flex flex-col items-center justify-between p-2 shadow-2xl cursor-pointer"
           onClick={handleNext}
         >
           {/* Top Chevron Up Icon */}
-          <div className="mt-2 text-orange-500 animate-bounce">
-            <ChevronUp className="w-8 h-8 stroke-[3]" />
+          <div className="mt-2 text-[#FF6B35] animate-bounce flex flex-col items-center">
+            <ChevronUp className="w-8 h-8 stroke-[3.5]" />
           </div>
 
           {/* White Circular "Go!" Button */}
-          <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-lg border border-white text-orange-600 font-black text-xl tracking-tight hover:bg-orange-50 transition-colors">
+          <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-lg border border-white text-[#FF6B35] font-black text-xl tracking-tight hover:bg-orange-50 transition-colors font-outfit">
             Go!
           </div>
         </motion.div>
 
-        <p className="text-white/70 text-xs font-medium tracking-wide">
+        <p className="text-[#FFF8F1]/90 text-xs font-semibold tracking-wide font-manrope">
           {currentSlideIndex === SLIDES.length - 1
             ? 'Toca Go! para Comenzar'
             : 'Toca Go! para continuar'}
@@ -155,3 +155,4 @@ export const OnboardingFlow: React.FC = () => {
     </div>
   );
 };
+

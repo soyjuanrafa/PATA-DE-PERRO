@@ -1,8 +1,50 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Brand Typography: Outfit (Titles/Buttons/CTA), Manrope (Body/Subtitles/Nav), IBM Plex Sans (Technical/Badges/Microcopy) */
+  --font-display: 'Outfit', sans-serif;
+  --font-body: 'Manrope', sans-serif;
+  --font-mono: 'IBM Plex Sans', monospace;
+
+  /* Official Brand Colors from PDF */
+  --color-naranja-atardecer: #FF6B35;
+  --color-verde-tropical: #3FAF6C;
+  --color-amarillo-sol: #FFC83D;
+  --color-azul-petroleo: #23404A;
+  --color-marfil: #FFF8F1;
+
+  /* Secondary & Neutral Colors */
+  --color-azul-oscuro: #162A31;
+  --color-verde-claro: #73C996;
+  --color-amarillo-claro: #FFE08A;
+  --color-coral: #FF8D64;
+  --color-gris-calido: #D9D5CF;
+  --color-gris-claro: #E8E5E0;
+  --color-gris-medio: #9A9A9A;
+  --color-blanco: #FFFFFF;
+
+  font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--color-marfil);
+  color: var(--color-azul-petroleo);
+}
+
+body {
+  font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+  background-color: #FFF8F1;
+  color: #23404A;
+}
+
+h1, h2, h3, h4, .font-heading, .font-outfit {
+  font-family: 'Outfit', sans-serif;
+}
+
+.font-manrope {
+  font-family: 'Manrope', sans-serif;
+}
+
+.font-ibm-plex {
+  font-family: 'IBM Plex Sans', sans-serif;
 }
 
 .scrollbar-none::-webkit-scrollbar {
@@ -12,3 +54,4 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
