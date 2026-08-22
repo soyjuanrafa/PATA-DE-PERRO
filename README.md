@@ -29,6 +29,29 @@ Cumpliendo con los lineamientos de diseño de la marca:
 
 ---
 
+## 📤 Cómo Subir el Proyecto a tu Propio Repositorio de GitHub
+
+Si descargaste el código o deseas conectar este proyecto a tu propia cuenta de GitHub:
+
+1. **Crea un nuevo repositorio vacío en GitHub** (sin README ni .gitignore inicial).
+2. **Ejecuta los siguientes comandos en tu terminal:**
+
+```bash
+# 1. Enlazar tu repositorio remoto (reemplaza 'tu-usuario' y 'tu-repositorio')
+git remote add origin https://github.com/tu-usuario/tu-repositorio.git
+
+# 2. Asegurar que estás en la rama principal
+git branch -M main
+
+# 3. Subir todos los archivos y commits a GitHub
+git push -u origin main
+```
+
+> **Nota para Exportación desde AI Studio**:
+> Si utilizas el menú de configuración de Google AI Studio (**Export to GitHub** o **Download ZIP**), el proyecto ya contiene `.gitignore`, `package-lock.json`, configuraciones de TypeScript y el pipeline de CI/CD listo para ejecutarse sin errores.
+
+---
+
 ## 🚀 Guía de Configuración e Instalación Local
 
 Asegura la **portabilidad total** entre estaciones de trabajo mediante Node.js, Vite y Docker.
