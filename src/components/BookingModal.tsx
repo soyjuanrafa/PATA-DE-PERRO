@@ -10,7 +10,13 @@ import { resolveImageUrl, handleImageFallback } from '../utils/imageHelper';
 import { Calendar, Users, X, CheckCircle, MessageSquare, ShieldCheck } from 'lucide-react';
 
 export const BookingModal: React.FC = () => {
-  const { activeBookingExperience, setActiveBookingExperience, createReservation, setActiveScreen } = useApp();
+  const {
+    activeBookingExperience,
+    setActiveBookingExperience,
+    createReservation,
+    setActiveScreen,
+    openOrCreateChatThread,
+  } = useApp();
 
   const [date, setDate] = useState('2026-08-15');
   const [guests, setGuests] = useState(2);
@@ -37,14 +43,14 @@ export const BookingModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#162A31]/70 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-[#FFF8F1] rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-[#E8E5E0] space-y-6 text-[#23404A]">
+    <div className="fixed inset-0 z-50 bg-[#162A31]/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="bg-[#FFF8F1] rounded-3xl max-w-md w-full p-5 sm:p-7 shadow-2xl border border-[#E8E5E0] space-y-5 text-[#23404A] max-h-[95vh] overflow-y-auto custom-scrollbar">
         <div className="flex items-center justify-between border-b border-[#E8E5E0] pb-3">
           <div className="flex items-center gap-2">
             <span className="p-2 bg-[#FFEADB] text-[#FF6B35] rounded-xl border border-[#FF6B35]/30">
               <Calendar className="w-5 h-5" />
             </span>
-            <h2 className="text-[#23404A] font-extrabold text-xl font-outfit">Confirmar Reserva</h2>
+            <h2 className="text-[#23404A] font-extrabold text-lg sm:text-xl font-outfit">Confirmar Reserva</h2>
           </div>
 
           <button
@@ -154,10 +160,27 @@ export const BookingModal: React.FC = () => {
                 href={getWhatsAppUrl()}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full py-3.5 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold rounded-full flex items-center justify-center gap-2 shadow-md transition-all text-xs font-outfit cursor-pointer"
+                className="w-full py-3 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold rounded-full flex items-center justify-center gap-2 shadow-md transition-all text-xs font-outfit cursor-pointer"
               >
-                <MessageSquare className="w-4 h-4" /> Contactar Anfitrión en WhatsApp
+                <MessageSquare className="w-4 h-4" /> Abrir en WhatsApp Externo
               </a>
+
+              <button
+                type="button"
+                onClick={() => {
+                  openOrCreateChatThread(
+                    exp,
+                    exp.id_anfitrion,
+                    exp.anfitrion_nombre,
+                    `¡Hola ${exp.anfitrion_nombre}! Acabo de reservar "${exp.titulo}" (Código: ${completedCode}) para el ${date} con ${guests} personas.`
+                  );
+                  setActiveBookingExperience(null);
+                  setCompletedCode(null);
+                }}
+                className="w-full py-3 bg-[#23404A] hover:bg-[#162A31] text-white font-bold rounded-full flex items-center justify-center gap-2 shadow-md transition-all text-xs font-outfit cursor-pointer"
+              >
+                <MessageSquare className="w-4 h-4 text-[#FF6B35]" /> Chatear en la App (Estilo WhatsApp)
+              </button>
             </div>
 
             <button

@@ -40,6 +40,26 @@ export interface RedesSociales {
   web?: string;
 }
 
+export interface UserAccount {
+  id_usuario: string;
+  nombre: string;
+  correo: string;
+  password?: string;
+  role: UserRole;
+  avatar?: string;
+  telefono?: string;
+  ciudad?: string;
+  bio?: string;
+  redesSociales?: RedesSociales;
+  moodsFavoritos?: MoodTag[];
+  savedExperienceIds?: string[];
+  reservas?: Reserva[];
+  experienciasPropias?: Experiencia[];
+  chatThreads?: ChatThread[];
+  fechaRegistro: string;
+  ultimoAcceso: string;
+}
+
 export interface Turista {
   id_turista: string;
   nombre: string;
@@ -139,7 +159,10 @@ export interface ChatMessage {
   emisor_avatar?: string;
   texto: string;
   timestamp: string;
-  tipo?: 'texto' | 'ubicacion' | 'reserva_info' | 'foto';
+  tipo?: 'texto' | 'ubicacion' | 'reserva_info' | 'foto' | 'audio' | 'itinerario';
+  media_url?: string;
+  audio_duracion?: string;
+  reaccion?: string;
   leido: boolean;
 }
 

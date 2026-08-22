@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { CIUDADES_CREATIVAS, CiudadCreativa } from '../data/mockData';
 import { resolveImageUrl, handleImageFallback } from '../utils/imageHelper';
-import { MapPin, Navigation, Camera, Compass, Star, ChevronRight } from 'lucide-react';
+import { MapPin, Navigation, Camera, Compass, Star, ChevronRight, ArrowLeft } from 'lucide-react';
 
 export const MapView: React.FC = () => {
   const { experiences, setSelectedExperience, setActiveScreen } = useApp();
@@ -20,8 +20,20 @@ export const MapView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#faf6f0] pb-20 pt-4 px-4 sm:px-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
+      {/* Top Back Navigation */}
       <div className="flex items-center justify-between">
+        <button
+          id="btn-map-back"
+          onClick={() => setActiveScreen('explore')}
+          className="flex items-center gap-2 text-xs font-bold text-[#23404A] hover:text-[#FF6B35] bg-white px-3.5 py-1.5 rounded-full border border-stone-200 shadow-2xs transition-all font-manrope cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Volver al Catálogo</span>
+        </button>
+      </div>
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <span className="bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
             Geolocalización & RA

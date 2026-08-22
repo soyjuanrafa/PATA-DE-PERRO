@@ -12,6 +12,8 @@ import {
   Anfitrion,
   Reserva,
   Turista,
+  UserRole,
+  UserAccount,
 } from '../types';
 
 export interface CiudadCreativa {
@@ -303,6 +305,65 @@ export const INITIAL_USER: Turista = {
   fechaRegistro: '2026-01-15',
 };
 
+export const INITIAL_ACCOUNTS: UserAccount[] = [
+  {
+    id_usuario: 'usr_demo_01',
+    nombre: 'Sofía Guevara',
+    correo: 'sofia.guevara@patadeperro.ni',
+    password: '123',
+    role: UserRole.TURISTA,
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80',
+    telefono: '+505 8901-2345',
+    ciudad: 'León',
+    bio: 'Viajera apasionada por el turismo comunitario, las tradiciones artesanales en barro y los paisajes volcánicos de Nicaragua.',
+    redesSociales: {
+      instagram: '@sofi.pata_de_perro',
+      facebook: 'facebook.com/sofia.guevara.ni',
+      tiktok: '@sofiaguevara_travel',
+      twitter: '@sofiaguevarani',
+      web: 'https://patadeperro.ni/viajeros/sofia',
+    },
+    moodsFavoritos: [MoodTag.AVENTURERO, MoodTag.CULTURAL, MoodTag.CREATIVO],
+    savedExperienceIds: ['exp_tierra_01', 'exp_tierra_04'],
+    fechaRegistro: '2026-01-15',
+    ultimoAcceso: '2026-08-21T18:30:00Z',
+  },
+  {
+    id_usuario: 'anf_01',
+    nombre: 'Doña María Ruiz',
+    correo: 'maria.ruiz@patadeperro.ni',
+    password: '123',
+    role: UserRole.ANFITRION,
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
+    telefono: '+505 8812-3456',
+    ciudad: 'San Juan de Oriente',
+    bio: 'Maestra artesana de cerámica con 25 años moldeando el barro con técnicas precolombinas.',
+    redesSociales: {
+      instagram: '@ceramica.ruiz.ni',
+      facebook: 'facebook.com/taller.ruiz.artesanias',
+    },
+    fechaRegistro: '2025-11-20',
+    ultimoAcceso: '2026-08-21T19:15:00Z',
+  },
+  {
+    id_usuario: 'anf_02',
+    nombre: 'Carlos Mendoza',
+    correo: 'carlos.mendoza@patadeperro.ni',
+    password: '123',
+    role: UserRole.ANFITRION,
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+    telefono: '+505 8734-5678',
+    ciudad: 'León',
+    bio: 'Guía certificado en volcano boarding y rescate en el Volcán Cerro Negro.',
+    redesSociales: {
+      instagram: '@carlos_volcanoguide',
+      tiktok: '@cerro_negro_adventures',
+    },
+    fechaRegistro: '2025-10-05',
+    ultimoAcceso: '2026-08-20T14:00:00Z',
+  },
+];
+
 export const INITIAL_RESERVATIONS: Reserva[] = [
   {
     id_reserva: 'res_1001',
@@ -334,7 +395,7 @@ export const INITIAL_CHAT_THREADS = [
     id_exp: 'exp_tierra_01',
     exp_titulo: 'Taller de Cerámica Ancestral en Barro',
     exp_imagen: '341fa7530e46bdee603f28736b625f9e.jpg',
-    ultimo_mensaje: '¡Hola Sofía! Tu arcilla y torno ya están listos para tu visita en San Juan de Oriente.',
+    ultimo_mensaje: '¡Hola Sofía! Tu arcilla y torno ya están listos en San Juan de Oriente.',
     ultimo_timestamp: '10:30 AM',
     mensajes_no_leidos_turista: 1,
     mensajes_no_leidos_anfitrion: 0,
@@ -348,7 +409,7 @@ export const INITIAL_CHAT_THREADS = [
         emisor_avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80',
         texto: '¡Hola Doña María! Acabo de hacer la reserva con código PDP-882A1B. ¿Se requiere llevar alguna ropa en específico para no mancharnos con el barro?',
         timestamp: '10:15 AM',
-        tipo: 'texto' as const,
+        tipo: 'texto',
         leido: true,
       },
       {
@@ -360,7 +421,20 @@ export const INITIAL_CHAT_THREADS = [
         emisor_avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
         texto: '¡Hola Sofía! Qué gusto saludarte. Te recomendamos traer ropa cómoda de algodón y calzado bajo. Acá les facilitamos delantales tradicionales de lona para que trabajen tranquilas.',
         timestamp: '10:22 AM',
-        tipo: 'texto' as const,
+        tipo: 'texto',
+        leido: true,
+      },
+      {
+        id_mensaje: 'msg_02_audio',
+        id_hilo: 'thread_01',
+        emisor_id: 'anf_01',
+        emisor_nombre: 'Doña María Ruiz',
+        emisor_rol: 'Anfitrión' as any,
+        emisor_avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
+        texto: 'Mensaje de voz: Indicaciones de llegada al taller y parqueo',
+        timestamp: '10:25 AM',
+        tipo: 'audio',
+        audio_duracion: '0:34',
         leido: true,
       },
       {
@@ -370,9 +444,9 @@ export const INITIAL_CHAT_THREADS = [
         emisor_nombre: 'Doña María Ruiz',
         emisor_rol: 'Anfitrión' as any,
         emisor_avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
-        texto: '¡Hola Sofía! Tu arcilla y torno ya están listos para tu visita en San Juan de Oriente. ¡Te esperamos con cafecito caliente!',
+        texto: '¡Hola Sofía! Tu arcilla y torno ya están listos en San Juan de Oriente. ¡Te esperamos con cafecito caliente!',
         timestamp: '10:30 AM',
-        tipo: 'texto' as const,
+        tipo: 'texto',
         leido: false,
       },
     ],

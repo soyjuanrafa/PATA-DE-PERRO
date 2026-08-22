@@ -650,7 +650,7 @@ export const HostDashboard: React.FC = () => {
                             const relatedExp = experiences.find(e => e.id_exp === r.id_exp);
                             openOrCreateChatThread(
                               relatedExp,
-                              user?.id_usuario || 'tur_demo',
+                              r.id_turista || 'usr_demo_01',
                               r.turista_nombre,
                               `¡Hola ${r.turista_nombre}! Soy tu anfitrión de Pata de Perro. Respecto a tu reserva ${r.codigo_confirmacion}, ¿tienes alguna duda antes del viaje?`
                             );

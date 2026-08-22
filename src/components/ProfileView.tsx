@@ -30,10 +30,14 @@ import {
   Heart,
   Compass,
   ArrowRight,
+  ArrowLeft,
   BookOpen,
   HelpCircle,
   Settings,
   ShieldCheck,
+  LogOut,
+  Users,
+  Plus,
 } from 'lucide-react';
 
 const PRESET_AVATARS = [
@@ -45,10 +49,21 @@ const PRESET_AVATARS = [
 ];
 
 export const ProfileView: React.FC = () => {
-  const { user, updateUserProfile, showToast, setActiveScreen, reservations, savedExperienceIds } = useApp();
+  const {
+    user,
+    updateUserProfile,
+    showToast,
+    setActiveScreen,
+    reservations,
+    savedExperienceIds,
+    accounts,
+    logoutAccount,
+    switchAccount,
+  } = useApp();
 
   const touristUser = user as Turista;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Form states
   const [nombre, setNombre] = useState(touristUser?.nombre || 'Sofía Guevara');
@@ -155,6 +170,27 @@ export const ProfileView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-stone-50 pb-24 pt-6 px-4 sm:px-6 max-w-5xl mx-auto space-y-6">
+      {/* Top Navigation & Return Bar */}
+      <div className="flex items-center justify-between gap-3">
+        <button
+          id="btn-profile-back-explore"
+          onClick={() => setActiveScreen('explore')}
+          className="flex items-center gap-2 text-xs font-bold text-[#23404A] hover:text-[#FF6B35] bg-white px-3.5 py-1.5 rounded-full border border-stone-200 shadow-2xs transition-all font-manrope cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Volver al Catálogo</span>
+        </button>
+
+        <button
+          id="btn-profile-logout-top"
+          onClick={() => setShowLogoutModal(true)}
+          className="flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3.5 py-1.5 rounded-full border border-rose-200 transition-all font-manrope cursor-pointer"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>Cerrar Sesión</span>
+        </button>
+      </div>
+
       {/* Top Breadcrumb & Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -679,6 +715,83 @@ export const ProfileView: React.FC = () => {
             </div>
           </div>
 
+          {/* Registered Accounts Management Card */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-extrabold text-stone-900 font-outfit flex items-center gap-2">
+                  <Users className="w-5 h-5 text-[#FF6B35]" />
+                  <span>Cuentas Registradas en Este Dispositivo</span>
+                </h2>
+                <p className="text-xs text-stone-500">
+                  Tus cuentas quedan guardadas de forma segura con todos sus cambios, reservas y mensajes.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActiveScreen('welcome')}
+                className="px-4 py-2 bg-stone-100 hover:bg-orange-50 text-stone-700 hover:text-[#FF6B35] rounded-2xl text-xs font-bold font-outfit transition-all flex items-center gap-1.5 self-start sm:self-auto border border-stone-200 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Registrar / Cambiar Cuenta</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              {accounts.map(acc => {
+                const isCurrent = acc.correo.toLowerCase() === user?.correo?.toLowerCase();
+                return (
+                  <div
+                    key={acc.id_usuario}
+                    className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                      isCurrent
+                        ? 'bg-orange-50/70 border-[#FF6B35]/40 shadow-xs'
+                        : 'bg-stone-50 border-stone-200 hover:border-stone-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <img
+                        src={acc.avatar}
+                        alt={acc.nombre}
+                        className="w-11 h-11 rounded-full object-cover border border-stone-200 shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="text-xs sm:text-sm font-bold text-stone-900 font-outfit truncate">
+                            {acc.nombre}
+                          </h4>
+                          {isCurrent && (
+                            <span className="px-2 py-0.2 rounded-full bg-[#FF6B35] text-white text-[9px] font-black font-ibm-plex shrink-0">
+                              Activa
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-stone-500 font-ibm-plex truncate">{acc.correo}</p>
+                        <p className="text-[10px] text-stone-400 font-manrope">
+                          Rol: {acc.role} • {acc.reservas?.length || 0} reservas
+                        </p>
+                      </div>
+                    </div>
+
+                    {!isCurrent && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          switchAccount(acc.id_usuario);
+                          showToast(`Has cambiado a la cuenta de ${acc.nombre}`);
+                        }}
+                        className="px-3 py-1.5 bg-[#23404A] hover:bg-[#162A31] text-white rounded-xl text-xs font-bold font-outfit shrink-0 transition-colors cursor-pointer"
+                      >
+                        Usar
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Submit Actions */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
             <button
@@ -690,6 +803,14 @@ export const ProfileView: React.FC = () => {
             </button>
 
             <div className="flex items-center gap-3 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setShowLogoutModal(true)}
+                className="px-4 py-3.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-2xl text-xs sm:text-sm font-bold transition-colors flex items-center gap-2 cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Cerrar Sesión</span>
+              </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('vista_previa')}
@@ -708,6 +829,41 @@ export const ProfileView: React.FC = () => {
             </div>
           </div>
         </form>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full text-stone-900 text-center space-y-4 shadow-2xl border border-stone-200 animate-in zoom-in-95">
+            <div className="w-14 h-14 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+              <LogOut className="w-7 h-7" />
+            </div>
+            <h3 className="text-lg font-bold text-[#23404A] font-outfit">¿Deseas cerrar tu sesión?</h3>
+            <p className="text-xs text-stone-500 font-manrope">
+              Tu cuenta quedará guardada con todos sus datos y reservas actualizadas para cuando decidas volver.
+            </p>
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLogoutModal(false)}
+                className="py-2.5 px-4 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-2xl text-xs font-bold font-outfit transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLogoutModal(false);
+                  logoutAccount();
+                  showToast('Sesión cerrada con éxito.');
+                }}
+                className="py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl text-xs font-bold font-outfit transition-colors shadow-md shadow-rose-600/25 cursor-pointer"
+              >
+                Sí, Cerrar Sesión
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

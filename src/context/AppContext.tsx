@@ -16,11 +16,13 @@ import {
   EstadoReserva,
   ChatMessage,
   ChatThread,
+  UserAccount,
 } from '../types';
 import {
   INITIAL_EXPERIENCES,
   INITIAL_HOSTS,
   INITIAL_USER,
+  INITIAL_ACCOUNTS,
   INITIAL_RESERVATIONS,
   INITIAL_CHAT_THREADS,
 } from '../data/mockData';
@@ -29,6 +31,7 @@ import {
   serializeBackup,
   parseAndValidateBackup,
   sanitizeInput,
+  validateEmail,
 } from '../utils/security';
 
 export type ActiveScreen =
@@ -48,6 +51,12 @@ export type ActiveScreen =
   | 'tech_docs'
   | 'dev_options';
 
+interface AuthResponse {
+  success: boolean;
+  message: string;
+  account?: UserAccount;
+}
+
 interface AppContextType {
   activeScreen: ActiveScreen;
   setActiveScreen: (screen: ActiveScreen) => void;
@@ -55,6 +64,21 @@ interface AppContextType {
   setUserRole: (role: UserRole) => void;
   user: Turista | Anfitrion | null;
   setUser: (user: Turista | Anfitrion | null) => void;
+  accounts: UserAccount[];
+  registerAccount: (data: {
+    nombre: string;
+    correo: string;
+    password?: string;
+    role?: UserRole;
+    avatar?: string;
+    ciudad?: string;
+    bio?: string;
+    telefono?: string;
+  }) => AuthResponse;
+  loginAccount: (correo: string, password?: string) => AuthResponse;
+  logoutAccount: () => void;
+  switchAccount: (accountId: string) => boolean;
+  deleteSavedAccount: (accountId: string) => boolean;
   updateUserProfile: (updated: Partial<Turista>) => void;
   updateHostProfile: (updated: Partial<Anfitrion>) => void;
   experiences: Experiencia[];
@@ -87,7 +111,17 @@ interface AppContextType {
   updateExperience: (expId: string, updated: Partial<Experiencia>) => void;
   deleteExperience: (expId: string) => void;
   openOrCreateChatThread: (exp?: Experiencia | null, hostId?: string, hostNombre?: string, initialMsg?: string) => string;
-  sendChatMessage: (threadId: string, text: string) => void;
+  sendChatMessage: (
+    threadId: string,
+    text: string,
+    options?: {
+      tipo?: 'texto' | 'foto' | 'audio' | 'ubicacion' | 'itinerario';
+      media_url?: string;
+      audio_duracion?: string;
+    }
+  ) => void;
+  reactToMessage: (threadId: string, messageId: string, emoji: string) => void;
+  deleteMessage: (threadId: string, messageId: string) => void;
   markThreadAsRead: (threadId: string) => void;
   totalUnreadMessagesCount: number;
   exportBackupJSON: () => void;
@@ -98,12 +132,30 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const LOCAL_STORAGE_KEY = 'patadeperro_app_state_v2';
+const ACCOUNTS_STORAGE_KEY = 'patadeperro_registered_accounts_v1';
 const DEV_MODE_STORAGE_KEY = 'patadeperro_dev_mode_unlocked';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeScreen, setActiveScreen] = useState<ActiveScreen>('onboarding');
   const [userRole, setUserRole] = useState<UserRole>(UserRole.TURISTA);
   const [user, setUser] = useState<Turista | Anfitrion | null>(INITIAL_USER);
+
+  // Stored User Accounts on Device
+  const [accounts, setAccounts] = useState<UserAccount[]>(() => {
+    try {
+      const savedAccountsStr = localStorage.getItem(ACCOUNTS_STORAGE_KEY);
+      if (savedAccountsStr) {
+        const parsed = JSON.parse(savedAccountsStr);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Could not read cached accounts', e);
+    }
+    return INITIAL_ACCOUNTS;
+  });
+
   const [experiences, setExperiences] = useState<Experiencia[]>(INITIAL_EXPERIENCES);
   const [reservations, setReservations] = useState<Reserva[]>(INITIAL_RESERVATIONS);
   const [chatThreads, setChatThreads] = useState<ChatThread[]>(INITIAL_CHAT_THREADS as ChatThread[]);
@@ -149,7 +201,283 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  // Load state from localStorage on init
+  // Persist accounts to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+    } catch (e) {
+      console.warn('Could not persist accounts to localStorage', e);
+    }
+  }, [accounts]);
+
+  // Sync active user state back to accounts collection
+  const syncCurrentUserToAccounts = (currentUser: Turista | Anfitrion | null, currentRole: UserRole) => {
+    if (!currentUser) return;
+    const userEmail = currentUser.correo?.trim().toLowerCase();
+    if (!userEmail) return;
+
+    setAccounts(prevAccounts => {
+      const idx = prevAccounts.findIndex(a => a.correo.trim().toLowerCase() === userEmail);
+      const isTourist = currentRole === UserRole.TURISTA;
+      const currentId = isTourist ? (currentUser as Turista).id_turista : (currentUser as Anfitrion).id_anfitrion;
+
+      const updatedAccount: UserAccount = {
+        id_usuario: currentId || (idx >= 0 ? prevAccounts[idx].id_usuario : `usr_${Date.now()}`),
+        nombre: currentUser.nombre,
+        correo: currentUser.correo,
+        password: idx >= 0 ? prevAccounts[idx].password : '1234',
+        role: currentRole,
+        avatar: currentUser.avatar,
+        telefono: currentUser.telefono,
+        ciudad: isTourist ? (currentUser as Turista).ciudad_origen : (currentUser as Anfitrion).ciudad,
+        bio: currentUser.bio,
+        redesSociales: currentUser.redesSociales,
+        moodsFavoritos: isTourist ? (currentUser as Turista).moodsFavoritos : undefined,
+        savedExperienceIds,
+        reservas: reservations,
+        chatThreads,
+        fechaRegistro: idx >= 0 ? prevAccounts[idx].fechaRegistro : new Date().toISOString().split('T')[0],
+        ultimoAcceso: new Date().toISOString(),
+      };
+
+      if (idx >= 0) {
+        const copy = [...prevAccounts];
+        copy[idx] = { ...copy[idx], ...updatedAccount };
+        return copy;
+      } else {
+        return [...prevAccounts, updatedAccount];
+      }
+    });
+  };
+
+  // Register Account with anti-duplicate email protection
+  const registerAccount = (data: {
+    nombre: string;
+    correo: string;
+    password?: string;
+    role?: UserRole;
+    avatar?: string;
+    ciudad?: string;
+    bio?: string;
+    telefono?: string;
+  }): AuthResponse => {
+    const cleanNombre = sanitizeInput(data.nombre?.trim() || '');
+    const cleanCorreo = sanitizeInput(data.correo?.trim() || '');
+    const cleanPassword = data.password?.trim() || '1234';
+    const role = data.role || UserRole.TURISTA;
+
+    if (!cleanNombre) {
+      return { success: false, message: 'Por favor ingresa tu nombre completo.' };
+    }
+
+    if (!cleanCorreo || !validateEmail(cleanCorreo)) {
+      return { success: false, message: 'Por favor ingresa un correo electrónico válido.' };
+    }
+
+    // CHECK DUPLICATE EMAIL: Strictly prevent registering the same email twice
+    const emailLower = cleanCorreo.toLowerCase();
+    const existingAccount = accounts.find(a => a.correo.trim().toLowerCase() === emailLower);
+    if (existingAccount) {
+      return {
+        success: false,
+        message: `El correo "${cleanCorreo}" ya se encuentra registrado en Pata de Perro. Por favor inicia sesión con tu contraseña o usa otro correo.`,
+      };
+    }
+
+    const newId = role === UserRole.ANFITRION ? `anf_${Date.now()}` : `usr_${Date.now()}`;
+    const defaultAvatar =
+      data.avatar ||
+      (role === UserRole.ANFITRION
+        ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80'
+        : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80');
+
+    const newAccount: UserAccount = {
+      id_usuario: newId,
+      nombre: cleanNombre,
+      correo: cleanCorreo,
+      password: cleanPassword,
+      role,
+      avatar: defaultAvatar,
+      telefono: data.telefono || '+505 8000-0000',
+      ciudad: data.ciudad || (role === UserRole.ANFITRION ? 'Masaya' : 'Managua'),
+      bio: data.bio || 'Amante del turismo comunitario y la riqueza cultural de Nicaragua.',
+      moodsFavoritos: [MoodTag.AVENTURERO, MoodTag.CULTURAL],
+      savedExperienceIds: ['exp_tierra_01'],
+      reservas: [],
+      chatThreads: [],
+      fechaRegistro: new Date().toISOString().split('T')[0],
+      ultimoAcceso: new Date().toISOString(),
+    };
+
+    // Save into accounts collection
+    setAccounts(prev => [newAccount, ...prev]);
+
+    // Set active session
+    if (role === UserRole.ANFITRION) {
+      const hostUser: Anfitrion = {
+        id_anfitrion: newId,
+        nombre: cleanNombre,
+        correo: cleanCorreo,
+        telefono: newAccount.telefono || '+505 8000-0000',
+        bio: newAccount.bio || '',
+        ciudad: newAccount.ciudad || 'Masaya',
+        avatar: defaultAvatar,
+        rating: 5.0,
+        experiencias_count: 0,
+        verificado: true,
+      };
+      setUser(hostUser);
+      setUserRole(UserRole.ANFITRION);
+      setActiveScreen('host_dashboard');
+    } else {
+      const touristUser: Turista = {
+        id_turista: newId,
+        nombre: cleanNombre,
+        correo: cleanCorreo,
+        telefono: newAccount.telefono,
+        ciudad_origen: newAccount.ciudad,
+        bio: newAccount.bio,
+        avatar: defaultAvatar,
+        moodsFavoritos: [MoodTag.AVENTURERO, MoodTag.CULTURAL],
+        fechaRegistro: newAccount.fechaRegistro,
+      };
+      setUser(touristUser);
+      setUserRole(UserRole.TURISTA);
+      setActiveScreen('explore');
+    }
+
+    setSavedExperienceIds(['exp_tierra_01']);
+    showToast(`¡Cuenta registrada exitosamente! Bienvenido, ${cleanNombre}.`);
+    return { success: true, message: '¡Cuenta registrada exitosamente!', account: newAccount };
+  };
+
+  // Login with existing account
+  const loginAccount = (correo: string, password?: string): AuthResponse => {
+    const cleanCorreo = sanitizeInput(correo.trim().toLowerCase());
+    if (!cleanCorreo) {
+      return { success: false, message: 'Por favor ingresa tu correo electrónico o nombre de usuario.' };
+    }
+
+    // Lookup account by email or username
+    const found = accounts.find(
+      a => a.correo.trim().toLowerCase() === cleanCorreo || a.correo.split('@')[0].toLowerCase() === cleanCorreo
+    );
+
+    if (!found) {
+      return {
+        success: false,
+        message: `No encontramos ninguna cuenta con el correo "${correo}". Por favor verifica tus datos o regístrate como nuevo usuario.`,
+      };
+    }
+
+    // Optional password verification
+    if (password && found.password && found.password !== password) {
+      return {
+        success: false,
+        message: 'Contraseña incorrecta. Por favor intenta nuevamente.',
+      };
+    }
+
+    // Switch active state to matched user
+    if (found.role === UserRole.ANFITRION) {
+      const hostUser: Anfitrion = {
+        id_anfitrion: found.id_usuario,
+        nombre: found.nombre,
+        correo: found.correo,
+        telefono: found.telefono || '+505 8812-3456',
+        bio: found.bio || '',
+        ciudad: found.ciudad || 'Nicaragua',
+        avatar: found.avatar,
+        rating: 4.95,
+        experiencias_count: found.experienciasPropias?.length || 1,
+        verificado: true,
+        redesSociales: found.redesSociales,
+      };
+      setUser(hostUser);
+      setUserRole(UserRole.ANFITRION);
+      setActiveScreen('host_dashboard');
+    } else {
+      const touristUser: Turista = {
+        id_turista: found.id_usuario,
+        nombre: found.nombre,
+        correo: found.correo,
+        telefono: found.telefono,
+        ciudad_origen: found.ciudad,
+        bio: found.bio,
+        avatar: found.avatar,
+        redesSociales: found.redesSociales,
+        moodsFavoritos: found.moodsFavoritos || [MoodTag.AVENTURERO, MoodTag.CULTURAL],
+        fechaRegistro: found.fechaRegistro,
+      };
+      setUser(touristUser);
+      setUserRole(UserRole.TURISTA);
+      setActiveScreen('explore');
+    }
+
+    if (found.savedExperienceIds) {
+      setSavedExperienceIds(found.savedExperienceIds);
+    }
+    if (found.reservas && found.reservas.length > 0) {
+      setReservations(prev => {
+        const unique = [...found.reservas!, ...prev.filter(r => !found.reservas!.some(fr => fr.id_reserva === r.id_reserva))];
+        return unique;
+      });
+    }
+
+    // Update last access timestamp
+    setAccounts(prev =>
+      prev.map(a => (a.id_usuario === found.id_usuario ? { ...a, ultimoAcceso: new Date().toISOString() } : a))
+    );
+
+    showToast(`¡Hola de nuevo, ${found.nombre}! Sesión iniciada.`);
+    return { success: true, message: '¡Sesión iniciada con éxito!', account: found };
+  };
+
+  // Switch between existing registered accounts
+  const switchAccount = (accountId: string): boolean => {
+    const target = accounts.find(a => a.id_usuario === accountId);
+    if (!target) {
+      showToast('No se encontró la cuenta seleccionada.');
+      return false;
+    }
+
+    // Save current active state before switching
+    if (user) {
+      syncCurrentUserToAccounts(user, userRole);
+    }
+
+    // Log in target account
+    loginAccount(target.correo);
+    return true;
+  };
+
+  // Logout session
+  const logoutAccount = () => {
+    if (user) {
+      syncCurrentUserToAccounts(user, userRole);
+    }
+    setUser(null);
+    setActiveScreen('welcome');
+    showToast('Has cerrado sesión correctamente.');
+  };
+
+  // Delete an account from device
+  const deleteSavedAccount = (accountId: string): boolean => {
+    const accountToDelete = accounts.find(a => a.id_usuario === accountId);
+    if (!accountToDelete) return false;
+
+    setAccounts(prev => prev.filter(a => a.id_usuario !== accountId));
+
+    // If deleting active account, logout
+    const currentId = user ? ('id_turista' in user ? user.id_turista : user.id_anfitrion) : null;
+    if (currentId === accountId) {
+      setUser(null);
+      setActiveScreen('welcome');
+    }
+
+    showToast(`Cuenta de "${accountToDelete.nombre}" eliminada de este dispositivo.`);
+    return true;
+  };
   useEffect(() => {
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -407,8 +735,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Send a message in a chat thread with automated host/tourist response simulation
-  const sendChatMessage = (threadId: string, text: string) => {
-    if (!text.trim()) return;
+  const sendChatMessage = (
+    threadId: string,
+    text: string,
+    options?: {
+      tipo?: 'texto' | 'foto' | 'audio' | 'ubicacion' | 'itinerario';
+      media_url?: string;
+      audio_duracion?: string;
+    }
+  ) => {
+    if (!text.trim() && !options?.media_url && !options?.audio_duracion) return;
     const cleanText = sanitizeInput(text.trim());
     const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const currentUserId = user ? ('id_turista' in user ? user.id_turista : user.id_anfitrion) : 'usr_current';
@@ -424,9 +760,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       emisor_avatar: currentUserAvatar,
       texto: cleanText,
       timestamp: nowTime,
-      tipo: 'texto',
+      tipo: options?.tipo || 'texto',
+      media_url: options?.media_url,
+      audio_duracion: options?.audio_duracion,
       leido: false,
     };
+
+    const previewSnippet =
+      options?.tipo === 'audio'
+        ? '🎤 Mensaje de voz'
+        : options?.tipo === 'foto'
+        ? '📷 Foto'
+        : options?.tipo === 'ubicacion'
+        ? '📍 Ubicación'
+        : cleanText;
 
     setChatThreads(prev =>
       prev.map(thread => {
@@ -434,7 +781,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const isUserTurista = userRole === UserRole.TURISTA;
           return {
             ...thread,
-            ultimo_mensaje: cleanText,
+            ultimo_mensaje: previewSnippet,
             ultimo_timestamp: nowTime,
             mensajes_no_leidos_turista: isUserTurista ? thread.mensajes_no_leidos_turista : thread.mensajes_no_leidos_turista + 1,
             mensajes_no_leidos_anfitrion: isUserTurista ? thread.mensajes_no_leidos_anfitrion + 1 : thread.mensajes_no_leidos_anfitrion,
@@ -485,6 +832,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         );
       }, 1500);
     }
+  };
+
+  const reactToMessage = (threadId: string, messageId: string, emoji: string) => {
+    setChatThreads(prev =>
+      prev.map(thread => {
+        if (thread.id_hilo === threadId) {
+          return {
+            ...thread,
+            mensajes: thread.mensajes.map(msg =>
+              msg.id_mensaje === messageId
+                ? { ...msg, reaccion: msg.reaccion === emoji ? undefined : emoji }
+                : msg
+            ),
+          };
+        }
+        return thread;
+      })
+    );
+  };
+
+  const deleteMessage = (threadId: string, messageId: string) => {
+    setChatThreads(prev =>
+      prev.map(thread => {
+        if (thread.id_hilo === threadId) {
+          const filtered = thread.mensajes.filter(m => m.id_mensaje !== messageId);
+          const lastMsg = filtered[filtered.length - 1];
+          return {
+            ...thread,
+            ultimo_mensaje: lastMsg ? lastMsg.texto : 'Mensaje eliminado',
+            mensajes: filtered,
+          };
+        }
+        return thread;
+      })
+    );
   };
 
   const markThreadAsRead = (threadId: string) => {
@@ -563,6 +945,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setUserRole,
         user,
         setUser,
+        accounts,
+        registerAccount,
+        loginAccount,
+        logoutAccount,
+        switchAccount,
+        deleteSavedAccount,
         updateUserProfile,
         updateHostProfile,
         experiences,
@@ -596,6 +984,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deleteExperience,
         openOrCreateChatThread,
         sendChatMessage,
+        reactToMessage,
+        deleteMessage,
         markThreadAsRead,
         totalUnreadMessagesCount,
         exportBackupJSON,

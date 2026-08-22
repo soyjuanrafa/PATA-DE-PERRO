@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { Calendar, MessageSquare, MapPin, CheckCircle, Clock, ShieldCheck, X, Compass, Phone } from 'lucide-react';
+import { Calendar, MessageSquare, MapPin, CheckCircle, Clock, ShieldCheck, X, Compass, Phone, ArrowLeft } from 'lucide-react';
 import { EstadoReserva } from '../types';
 import { resolveImageUrl, handleImageFallback } from '../utils/imageHelper';
 
@@ -21,6 +21,18 @@ export const ReservationsView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#FFF8F1] pb-24 pt-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6">
+      {/* Top Back navigation */}
+      <div className="flex items-center justify-between">
+        <button
+          id="btn-reservations-back"
+          onClick={() => setActiveScreen('explore')}
+          className="flex items-center gap-2 text-xs font-bold text-[#23404A] hover:text-[#FF6B35] bg-white px-3.5 py-1.5 rounded-full border border-[#E8E5E0] shadow-2xs transition-all font-manrope cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Volver al Catálogo</span>
+        </button>
+      </div>
+
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-3xl border border-[#E8E5E0] shadow-xs">
         <div>
