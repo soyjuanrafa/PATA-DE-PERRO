@@ -263,74 +263,57 @@ export const MessagesView: React.FC = () => {
     : '';
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-3 sm:py-5 space-y-3">
-      {/* Top Breadcrumb & Return navigation */}
-      <div className="flex items-center justify-between gap-3 px-1">
-        <button
-          id="btn-messages-back-main"
-          onClick={() => setActiveScreen(isAnfitrion ? 'host_dashboard' : 'explore')}
-          className="flex items-center gap-2 text-xs font-bold text-[#23404A] hover:text-[#FF6B35] bg-white px-3.5 py-1.5 rounded-full border border-[#E8E5E0] shadow-2xs transition-all font-manrope cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Volver a {isAnfitrion ? 'Panel de Anfitrión' : 'Catálogo de Rutas'}</span>
-        </button>
-
-        <div className="flex items-center gap-2 text-xs text-neutral-500 font-manrope">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="hidden sm:inline">Mensajería comunitaria activa</span>
-        </div>
-      </div>
-
+    <div className="w-full h-[calc(100dvh-4rem)] max-w-7xl mx-auto p-0 sm:p-3 lg:p-4 flex flex-col min-h-0 overflow-hidden">
       {/* Main Messaging Container with Native Pata de Perro Styling */}
-      <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#E8E5E0] shadow-lg overflow-hidden flex flex-col h-[calc(100dvh-7.5rem)] sm:h-[calc(100vh-8.5rem)] max-h-[920px]">
+      <div className="bg-white sm:rounded-3xl sm:border border-[#E8E5E0] shadow-sm overflow-hidden flex flex-1 min-h-0 w-full">
         {/* Main Grid: Left Conversation List | Center Conversation | Optional Right Details */}
-        <div className="flex-1 flex overflow-hidden relative">
+        <div className="flex-1 flex overflow-hidden relative min-h-0 w-full">
 
           {/* ========================================================================= */}
           {/* LEFT COLUMN: CONVERSATION THREADS LIST                                    */}
           {/* ========================================================================= */}
           <div
-            className={`w-full md:w-[320px] lg:w-[380px] shrink-0 border-r border-[#E8E5E0] bg-[#FAF8F5] flex flex-col z-10 transition-all ${
+            className={`w-full md:w-[320px] lg:w-[360px] shrink-0 border-r border-[#E8E5E0] bg-[#FAF8F5] flex flex-col z-10 transition-all ${
               !showMobileList ? 'hidden md:flex' : 'flex'
             }`}
           >
             {/* Native Brand Header Bar */}
             <div className="p-3 sm:p-4 bg-[#23404A] text-white flex items-center justify-between gap-3 shrink-0 shadow-xs">
-              <div className="flex items-center gap-2.5">
-                <div className="relative">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border-2 border-white/40 bg-[#162A31]">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <button
+                  onClick={() => setActiveScreen(isAnfitrion ? 'host_dashboard' : 'explore')}
+                  className="p-1.5 -ml-1 rounded-full hover:bg-white/10 text-white/90 transition-colors cursor-pointer"
+                  title="Volver"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <div className="relative shrink-0">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border-2 border-white/40 bg-[#162A31]">
                     {user?.avatar ? (
                       <img src={user.avatar} alt={user.nombre} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center font-bold text-white text-xs">
-                        <User className="w-5 h-5" />
+                        <User className="w-4 h-4" />
                       </div>
                     )}
                   </div>
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#23404A] rounded-full" />
+                  <span className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-400 border border-[#23404A] rounded-full" />
                 </div>
-                <div>
-                  <h2 className="text-xs sm:text-sm font-extrabold font-outfit leading-tight text-white flex items-center gap-1.5">
-                    <span>Mensajes Pata de Perro</span>
+                <div className="min-w-0">
+                  <h2 className="text-xs sm:text-sm font-extrabold font-outfit leading-tight text-white truncate">
+                    Mensajes
                   </h2>
-                  <p className="text-[10px] text-[#FFC83D] font-ibm-plex">
+                  <p className="text-[10px] text-[#FFC83D] font-ibm-plex truncate">
                     {isAnfitrion ? 'Perfil Anfitrión' : 'Perfil Turista'}
                   </p>
                 </div>
               </div>
 
               {/* Header Action Buttons */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setActiveScreen('explore')}
-                  className="p-2 rounded-full hover:bg-white/10 text-white/90 transition-colors cursor-pointer"
-                  title="Explorar nuevas rutas"
-                >
-                  <Compass className="w-4 h-4 text-[#FFC83D]" />
-                </button>
+              <div className="flex items-center gap-1 shrink-0">
                 <button
                   onClick={() => setFilterMode(filterMode === 'unread' ? 'all' : 'unread')}
-                  className={`p-2 rounded-full transition-colors cursor-pointer ${
+                  className={`p-1.5 rounded-full transition-colors cursor-pointer ${
                     filterMode === 'unread' ? 'bg-[#FF6B35] text-white' : 'hover:bg-white/10 text-white/90'
                   }`}
                   title="Filtrar mensajes no leídos"
@@ -341,15 +324,15 @@ export const MessagesView: React.FC = () => {
             </div>
 
             {/* Search Bar & Filters */}
-            <div className="p-2.5 sm:p-3 bg-white border-b border-[#E8E5E0] space-y-2 shrink-0">
+            <div className="p-2 sm:p-3 bg-white border-b border-[#E8E5E0] space-y-2 shrink-0">
               <div className="relative">
-                <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Buscar anfitrión, turista o ruta..."
+                  placeholder="Buscar conversación..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2 bg-[#F4F1EA] border border-transparent rounded-xl text-xs font-manrope text-[#23404A] focus:bg-white focus:border-[#FF6B35] focus:outline-hidden transition-all"
+                  className="w-full pl-8 pr-7 py-1.5 bg-[#F4F1EA] border border-transparent rounded-xl text-xs font-manrope text-[#23404A] focus:bg-white focus:border-[#FF6B35] focus:outline-hidden transition-all"
                 />
                 {searchQuery && (
                   <button
@@ -362,10 +345,10 @@ export const MessagesView: React.FC = () => {
               </div>
 
               {/* Filter Pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pt-0.5">
+              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
                 <button
                   onClick={() => setFilterMode('all')}
-                  className={`px-3 py-1 rounded-full text-[11px] font-bold font-outfit whitespace-nowrap transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold font-outfit whitespace-nowrap transition-all cursor-pointer ${
                     filterMode === 'all'
                       ? 'bg-[#23404A] text-white shadow-2xs'
                       : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
@@ -375,7 +358,7 @@ export const MessagesView: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setFilterMode('unread')}
-                  className={`px-3 py-1 rounded-full text-[11px] font-bold font-outfit whitespace-nowrap transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold font-outfit whitespace-nowrap transition-all cursor-pointer ${
                     filterMode === 'unread'
                       ? 'bg-[#FF6B35] text-white shadow-2xs'
                       : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
@@ -385,7 +368,7 @@ export const MessagesView: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setFilterMode('routes')}
-                  className={`px-3 py-1 rounded-full text-[11px] font-bold font-outfit whitespace-nowrap transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold font-outfit whitespace-nowrap transition-all cursor-pointer ${
                     filterMode === 'routes'
                       ? 'bg-[#E07A5F] text-white shadow-2xs'
                       : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
@@ -424,7 +407,7 @@ export const MessagesView: React.FC = () => {
                         setActiveThreadId(thread.id_hilo);
                         setShowMobileList(false);
                       }}
-                      className={`p-3 sm:p-3.5 flex items-center gap-3 cursor-pointer transition-all ${
+                      className={`p-3 flex items-center gap-3 cursor-pointer transition-all ${
                         isSelected
                           ? 'bg-[#FFF8F1] border-l-4 border-l-[#FF6B35]'
                           : 'hover:bg-stone-50 border-l-4 border-l-transparent'
@@ -435,10 +418,10 @@ export const MessagesView: React.FC = () => {
                         <img
                           src={itemContactAvatar}
                           alt={itemContactName}
-                          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-stone-200"
+                          className="w-10 h-10 rounded-full object-cover border border-stone-200"
                         />
                         {thread.exp_imagen && (
-                          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full overflow-hidden border-2 border-white bg-stone-100 shadow-2xs">
+                          <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full overflow-hidden border-2 border-white bg-stone-100 shadow-2xs">
                             <img
                               src={resolveImageUrl(thread.exp_imagen)}
                               onError={e => handleImageFallback(e, thread.exp_imagen)}
@@ -495,17 +478,17 @@ export const MessagesView: React.FC = () => {
           {/* ========================================================================= */}
           {activeThread ? (
             <div
-              className={`flex-1 flex flex-col bg-[#FDFBF7] z-0 transition-all ${
+              className={`flex-1 flex flex-col bg-[#F8F6F0] z-0 transition-all min-h-0 overflow-hidden ${
                 showMobileList ? 'hidden md:flex' : 'flex'
               }`}
             >
               {/* Conversation Top Header Bar */}
-              <div className="p-2.5 sm:p-3.5 bg-white border-b border-[#E8E5E0] flex items-center justify-between gap-2 sm:gap-3 shrink-0 shadow-2xs">
+              <div className="px-3 py-2.5 sm:px-4 sm:py-3 bg-white border-b border-[#E8E5E0] flex items-center justify-between gap-2 shrink-0 shadow-2xs">
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                   {/* Mobile Back to List Button */}
                   <button
                     onClick={() => setShowMobileList(true)}
-                    className="md:hidden p-2 rounded-full hover:bg-stone-100 text-[#23404A] transition-colors cursor-pointer"
+                    className="p-1.5 -ml-1 rounded-full hover:bg-stone-100 text-[#23404A] transition-colors cursor-pointer shrink-0"
                     title="Volver a lista de chats"
                   >
                     <ArrowLeft className="w-5 h-5" />
@@ -514,7 +497,7 @@ export const MessagesView: React.FC = () => {
                   {/* Contact Avatar & Status */}
                   <button
                     onClick={() => setShowContactDetails(!showContactDetails)}
-                    className="flex items-center gap-2.5 text-left group min-w-0 cursor-pointer"
+                    className="flex items-center gap-2 sm:gap-2.5 text-left group min-w-0 cursor-pointer"
                   >
                     <div className="relative shrink-0">
                       <img
@@ -530,24 +513,25 @@ export const MessagesView: React.FC = () => {
                         <h3 className="text-xs sm:text-sm font-extrabold text-[#23404A] font-outfit truncate group-hover:text-[#FF6B35] transition-colors">
                           {contactName}
                         </h3>
-                        <span className="hidden sm:inline-block px-2 py-0.2 text-[9px] font-extrabold uppercase rounded-full bg-orange-50 text-[#FF6B35] font-ibm-plex">
+                        <span className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-extrabold uppercase rounded-full bg-orange-50 text-[#FF6B35] font-ibm-plex">
                           {isAnfitrion ? 'Turista' : 'Anfitrión'}
                         </span>
                       </div>
-                      <p className="text-[10px] sm:text-[11px] text-stone-500 truncate font-manrope">
-                        {activeThread.exp_titulo || 'Ruta Cultural de Nicaragua'}
+                      <p className="text-[10px] sm:text-[11px] text-emerald-700 font-medium truncate font-manrope flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
+                        <span>En línea • {activeThread.exp_titulo || 'Ruta Creativa'}</span>
                       </p>
                     </div>
                   </button>
                 </div>
 
                 {/* Right Action Tools */}
-                <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
                   {/* Voice Call Button */}
                   <button
                     onClick={() => setActiveCallType('voice')}
-                    className="p-2 sm:p-2.5 rounded-full hover:bg-stone-100 text-[#23404A] transition-colors cursor-pointer"
-                    title="Llamada de voz comunitaria"
+                    className="p-2 rounded-full hover:bg-stone-100 text-[#23404A] transition-colors cursor-pointer"
+                    title="Llamada de voz"
                   >
                     <Phone className="w-4 h-4" />
                   </button>
@@ -555,8 +539,8 @@ export const MessagesView: React.FC = () => {
                   {/* Video Call Button */}
                   <button
                     onClick={() => setActiveCallType('video')}
-                    className="p-2 sm:p-2.5 rounded-full hover:bg-stone-100 text-[#23404A] transition-colors cursor-pointer"
-                    title="Videollamada en directo"
+                    className="p-2 rounded-full hover:bg-stone-100 text-[#23404A] transition-colors cursor-pointer"
+                    title="Videollamada"
                   >
                     <Video className="w-4 h-4" />
                   </button>
@@ -564,10 +548,10 @@ export const MessagesView: React.FC = () => {
                   {/* Search in chat */}
                   <button
                     onClick={() => setShowInChatSearch(!showInChatSearch)}
-                    className={`p-2 sm:p-2.5 rounded-full transition-colors cursor-pointer ${
+                    className={`p-2 rounded-full transition-colors cursor-pointer ${
                       showInChatSearch ? 'bg-orange-50 text-[#FF6B35]' : 'hover:bg-stone-100 text-[#23404A]'
                     }`}
-                    title="Buscar mensajes en este chat"
+                    title="Buscar mensajes"
                   >
                     <Search className="w-4 h-4" />
                   </button>
@@ -575,7 +559,7 @@ export const MessagesView: React.FC = () => {
                   {/* Info / Toggle Details Panel */}
                   <button
                     onClick={() => setShowContactDetails(!showContactDetails)}
-                    className={`p-2 sm:p-2.5 rounded-full transition-colors cursor-pointer ${
+                    className={`p-2 rounded-full transition-colors cursor-pointer ${
                       showContactDetails ? 'bg-[#23404A] text-white' : 'hover:bg-stone-100 text-[#23404A]'
                     }`}
                     title="Ver ficha de experiencia"
@@ -587,11 +571,11 @@ export const MessagesView: React.FC = () => {
 
               {/* Search Inside Chat Input Bar */}
               {showInChatSearch && (
-                <div className="p-2 bg-stone-100 border-b border-stone-200 flex items-center gap-2 animate-in slide-in-from-top-2">
-                  <Search className="w-4 h-4 text-stone-500 ml-2" />
+                <div className="p-2 bg-stone-100 border-b border-stone-200 flex items-center gap-2 animate-in slide-in-from-top-2 shrink-0">
+                  <Search className="w-4 h-4 text-stone-500 ml-2 shrink-0" />
                   <input
                     type="text"
-                    placeholder="Buscar texto en esta conversación..."
+                    placeholder="Buscar texto en este chat..."
                     value={inChatSearch}
                     onChange={e => setInChatSearch(e.target.value)}
                     className="flex-1 bg-white border border-stone-300 rounded-lg px-3 py-1.5 text-xs text-[#23404A] focus:outline-hidden focus:border-[#FF6B35]"
@@ -609,18 +593,18 @@ export const MessagesView: React.FC = () => {
                 </div>
               )}
 
-              {/* Linked Experience Pill on Top of Chat */}
+              {/* Linked Experience Slim Chip Banner */}
               {linkedExperience && (
-                <div className="px-3 sm:px-4 py-2 bg-orange-50/80 border-b border-orange-100 flex items-center justify-between gap-2 text-xs font-manrope">
-                  <div className="flex items-center gap-2 truncate">
+                <div className="px-3 py-1.5 bg-orange-50 border-b border-orange-200/60 flex items-center justify-between gap-2 text-xs font-manrope shrink-0">
+                  <div className="flex items-center gap-2 min-w-0">
                     <img
                       src={resolveImageUrl(linkedExperience.imagen_url)}
                       onError={e => handleImageFallback(e, linkedExperience.imagen_url)}
                       alt={linkedExperience.titulo}
-                      className="w-7 h-7 rounded-lg object-cover border border-orange-200 shrink-0"
+                      className="w-6 h-6 rounded-md object-cover border border-orange-200 shrink-0"
                     />
-                    <span className="text-stone-700 truncate font-semibold">
-                      Experiencia vinculada: <strong className="text-[#C85A32]">{linkedExperience.titulo}</strong> (${linkedExperience.precio} USD)
+                    <span className="text-stone-700 truncate text-[11px] sm:text-xs">
+                      Experiencia: <strong className="text-[#C85A32]">{linkedExperience.titulo}</strong>
                     </span>
                   </div>
                   <button
@@ -629,26 +613,20 @@ export const MessagesView: React.FC = () => {
                       setActiveBookingExperience(linkedExperience);
                       setActiveScreen('explore');
                     }}
-                    className="px-2.5 py-1 rounded-full bg-[#FF6B35] hover:bg-[#ff5518] text-white text-[11px] font-bold font-outfit uppercase shrink-0 transition-colors cursor-pointer"
+                    className="px-2.5 py-0.5 rounded-full bg-[#FF6B35] hover:bg-[#ff5518] text-white text-[10px] font-bold font-outfit uppercase shrink-0 transition-colors cursor-pointer"
                   >
-                    Ver Detalles
+                    Ver
                   </button>
                 </div>
               )}
 
               {/* Messages Body Canvas */}
-              <div
-                className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3.5"
-                style={{
-                  backgroundImage: 'radial-gradient(#E8E5E0 1px, transparent 1px)',
-                  backgroundSize: '20px 20px',
-                }}
-              >
+              <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-5 py-3 space-y-2.5">
                 {/* Security and Trust Badge */}
                 <div className="flex justify-center my-1">
-                  <div className="bg-white/90 backdrop-blur-xs border border-stone-200/80 px-3.5 py-1 rounded-full text-[11px] text-stone-500 font-ibm-plex flex items-center gap-1.5 shadow-2xs text-center">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Comunicación directa y protegida por Pata de Perro Nicaragua.</span>
+                  <div className="bg-white/80 backdrop-blur-xs border border-stone-200/80 px-3 py-0.5 rounded-full text-[10px] text-stone-500 font-ibm-plex flex items-center gap-1.5 shadow-2xs text-center">
+                    <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" />
+                    <span>Comunicación protegida y directa por Pata de Perro Nicaragua.</span>
                   </div>
                 </div>
 
@@ -657,30 +635,27 @@ export const MessagesView: React.FC = () => {
                     msg.emisor_rol === userRole ||
                     (user && msg.emisor_id === ('id_turista' in user ? user.id_turista : user.id_anfitrion));
 
+                  // Format text for voice notes: don't duplicate title if it's already descriptive
+                  const isVoiceNote = msg.tipo === 'audio';
+                  const voiceCaption = isVoiceNote && msg.texto ? msg.texto.replace(/^Mensaje de voz:\s*/i, '') : msg.texto;
+
                   return (
                     <div
                       key={msg.id_mensaje}
-                      className={`flex flex-col ${isMine ? 'items-end' : 'items-start'} group`}
+                      className={`flex flex-col ${isMine ? 'items-end' : 'items-start'} group relative`}
                     >
-                      <div className="relative max-w-[85%] sm:max-w-[70%]">
+                      <div className="relative max-w-[85%] sm:max-w-[72%]">
                         {/* Bubble Content */}
                         <div
-                          className={`p-3 sm:p-3.5 rounded-2xl text-xs sm:text-sm font-manrope shadow-xs transition-all relative ${
+                          className={`px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-manrope shadow-xs transition-all relative break-words ${
                             isMine
-                              ? 'bg-[#FF6B35] text-white rounded-tr-xs'
-                              : 'bg-white text-[#23404A] border border-[#E8E5E0] rounded-tl-xs'
+                              ? 'bg-[#FF6B35] text-white rounded-br-xs'
+                              : 'bg-white text-[#23404A] border border-[#E8E5E0] rounded-bl-xs'
                           }`}
                         >
-                          {/* Sender name for group clarity */}
-                          {!isMine && (
-                            <p className="text-[11px] font-bold text-[#C85A32] mb-1 font-outfit">
-                              {msg.emisor_nombre}
-                            </p>
-                          )}
-
                           {/* Foto media */}
                           {msg.tipo === 'foto' && msg.media_url && (
-                            <div className="mb-2 rounded-xl overflow-hidden border border-black/10">
+                            <div className="mb-1.5 rounded-xl overflow-hidden border border-black/10">
                               <img
                                 src={msg.media_url}
                                 alt="Foto compartida"
@@ -690,38 +665,48 @@ export const MessagesView: React.FC = () => {
                           )}
 
                           {/* Voice Note Audio player simulation */}
-                          {msg.tipo === 'audio' && (
-                            <div className="flex items-center gap-3 py-1 pr-2">
-                              <button
-                                onClick={() => handleToggleAudioPlay(msg.id_mensaje)}
-                                className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 ${
-                                  isMine ? 'bg-white text-[#FF6B35]' : 'bg-[#FF6B35] text-white'
-                                }`}
-                              >
-                                {playingAudioId === msg.id_mensaje ? (
-                                  <Pause className="w-4 h-4" />
-                                ) : (
-                                  <Play className="w-4 h-4 ml-0.5" />
-                                )}
-                              </button>
-                              <div className="flex-1 space-y-1">
-                                <div className="h-1.5 bg-black/10 rounded-full overflow-hidden">
-                                  <div
-                                    className={`h-full ${
-                                      isMine ? 'bg-white' : 'bg-[#FF6B35]'
-                                    } ${playingAudioId === msg.id_mensaje ? 'animate-pulse w-3/4' : 'w-1/3'}`}
-                                  />
-                                </div>
-                                <div className="flex justify-between text-[10px] opacity-80 font-ibm-plex">
-                                  <span>{msg.audio_duracion || '0:06'}</span>
-                                  <span>{playingAudioId === msg.id_mensaje ? 'Reproduciendo...' : 'Nota de voz'}</span>
+                          {isVoiceNote && (
+                            <div className="space-y-1 py-0.5 min-w-[180px] sm:min-w-[220px]">
+                              <div className="flex items-center gap-2.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleAudioPlay(msg.id_mensaje)}
+                                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-xs ${
+                                    isMine ? 'bg-white text-[#FF6B35]' : 'bg-[#FF6B35] text-white'
+                                  }`}
+                                >
+                                  {playingAudioId === msg.id_mensaje ? (
+                                    <Pause className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <Play className="w-3.5 h-3.5 ml-0.5" />
+                                  )}
+                                </button>
+                                <div className="flex-1 space-y-1">
+                                  <div className="h-1.5 bg-black/10 rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full ${
+                                        isMine ? 'bg-white' : 'bg-[#FF6B35]'
+                                      } ${playingAudioId === msg.id_mensaje ? 'animate-pulse w-3/4' : 'w-1/3'}`}
+                                    />
+                                  </div>
+                                  <div className="flex justify-between text-[10px] opacity-80 font-ibm-plex">
+                                    <span>{msg.audio_duracion || '0:15'}</span>
+                                    <span>{playingAudioId === msg.id_mensaje ? 'Reproduciendo...' : 'Nota de voz'}</span>
+                                  </div>
                                 </div>
                               </div>
+                              {voiceCaption && (
+                                <p className="text-[11px] opacity-90 leading-tight pt-0.5 italic">
+                                  {voiceCaption}
+                                </p>
+                              )}
                             </div>
                           )}
 
-                          {/* Main Text Content */}
-                          {msg.texto && <p className="leading-relaxed whitespace-pre-wrap">{msg.texto}</p>}
+                          {/* Main Text Content (for standard text messages) */}
+                          {!isVoiceNote && msg.texto && (
+                            <p className="leading-relaxed whitespace-pre-wrap">{msg.texto}</p>
+                          )}
 
                           {/* Timestamp and Delivery checkmarks */}
                           <div className={`flex items-center justify-end gap-1 mt-1 text-[10px] font-ibm-plex ${
@@ -729,42 +714,45 @@ export const MessagesView: React.FC = () => {
                           }`}>
                             <span>{msg.timestamp}</span>
                             {isMine && (
-                              <CheckCheck className="w-3.5 h-3.5 text-white/90 inline-block" />
+                              <CheckCheck className="w-3.5 h-3.5 text-white inline-block" />
                             )}
                           </div>
 
                           {/* Reaction badge if applied */}
                           {msg.reaccion && (
-                            <div className="absolute -bottom-2.5 right-2 bg-white border border-stone-200 rounded-full px-1.5 py-0.2 shadow-2xs text-xs">
+                            <div className="absolute -bottom-2 right-2 bg-white border border-stone-200 rounded-full px-1.5 py-0.2 shadow-2xs text-xs">
                               {msg.reaccion}
                             </div>
                           )}
                         </div>
 
-                        {/* Hover Quick Actions (React Emoji, Delete) */}
+                        {/* Quick Reaction buttons & Delete on hover/focus */}
                         <div
-                          className={`absolute top-0 ${
-                            isMine ? '-left-16' : '-right-16'
-                          } opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 p-1 bg-white/95 rounded-full border border-stone-200 shadow-2xs z-10`}
+                          className={`absolute -top-3 ${
+                            isMine ? 'left-0' : 'right-0'
+                          } opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex items-center gap-1 px-1.5 py-0.5 bg-white rounded-full border border-stone-200 shadow-sm z-10`}
                         >
                           <button
+                            type="button"
                             onClick={() => reactToMessage(activeThread.id_hilo, msg.id_mensaje, '❤️')}
-                            className="text-xs hover:scale-125 transition-transform"
-                            title="Reaccionar"
+                            className="text-xs hover:scale-125 transition-transform p-0.5 cursor-pointer"
+                            title="Reaccionar amor"
                           >
                             ❤️
                           </button>
                           <button
+                            type="button"
                             onClick={() => reactToMessage(activeThread.id_hilo, msg.id_mensaje, '👍')}
-                            className="text-xs hover:scale-125 transition-transform"
-                            title="Reaccionar"
+                            className="text-xs hover:scale-125 transition-transform p-0.5 cursor-pointer"
+                            title="Reaccionar me gusta"
                           >
                             👍
                           </button>
                           {isMine && (
                             <button
+                              type="button"
                               onClick={() => deleteMessage(activeThread.id_hilo, msg.id_mensaje)}
-                              className="text-stone-400 hover:text-rose-600 p-0.5"
+                              className="text-stone-400 hover:text-rose-600 p-0.5 cursor-pointer ml-0.5"
                               title="Eliminar mensaje"
                             >
                               <Trash2 className="w-3 h-3" />
@@ -779,7 +767,7 @@ export const MessagesView: React.FC = () => {
               </div>
 
               {/* Quick Prompts Suggestions Carousel */}
-              <div className="px-3 sm:px-4 py-2 bg-white border-t border-[#E8E5E0] flex items-center gap-2 overflow-x-auto scrollbar-none">
+              <div className="px-3 py-1.5 bg-white border-t border-[#E8E5E0] flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0">
                 <span className="text-[10px] font-bold text-stone-400 uppercase font-ibm-plex shrink-0 flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-[#FF6B35]" /> Sugerencias:
                 </span>
@@ -789,7 +777,7 @@ export const MessagesView: React.FC = () => {
                     onClick={() => {
                       setInputText(prompt);
                     }}
-                    className="px-3 py-1 rounded-full bg-stone-100 hover:bg-orange-50 hover:text-[#FF6B35] text-stone-700 text-xs font-manrope whitespace-nowrap transition-all border border-stone-200/60 cursor-pointer"
+                    className="px-2.5 py-1 rounded-full bg-stone-100 hover:bg-orange-50 hover:text-[#FF6B35] text-stone-700 text-[11px] font-manrope whitespace-nowrap transition-all border border-stone-200/60 cursor-pointer shrink-0"
                   >
                     {prompt}
                   </button>
@@ -797,10 +785,10 @@ export const MessagesView: React.FC = () => {
               </div>
 
               {/* Bottom Input Action Bar */}
-              <div className="p-2.5 sm:p-3.5 bg-white border-t border-[#E8E5E0] relative shrink-0">
+              <div className="p-2 sm:p-3 bg-white border-t border-[#E8E5E0] relative shrink-0">
                 {/* Emoji Picker Popover */}
                 {showEmojiPicker && (
-                  <div className="absolute bottom-16 left-3 sm:left-4 p-3 bg-white border border-stone-200 rounded-2xl shadow-xl z-30 grid grid-cols-6 sm:grid-cols-8 gap-2 animate-in fade-in max-w-xs">
+                  <div className="absolute bottom-14 left-3 sm:left-4 p-2.5 bg-white border border-stone-200 rounded-2xl shadow-xl z-30 grid grid-cols-6 sm:grid-cols-8 gap-1.5 animate-in fade-in max-w-xs">
                     {EMOJI_LIST.map(emoji => (
                       <button
                         key={emoji}
@@ -809,7 +797,7 @@ export const MessagesView: React.FC = () => {
                           setInputText(prev => prev + emoji);
                           setShowEmojiPicker(false);
                         }}
-                        className="text-lg hover:scale-125 transition-transform p-1 cursor-pointer"
+                        className="text-base hover:scale-125 transition-transform p-1 cursor-pointer"
                       >
                         {emoji}
                       </button>
@@ -819,13 +807,13 @@ export const MessagesView: React.FC = () => {
 
                 {/* Attachment Menu Popover */}
                 {showAttachmentMenu && (
-                  <div className="absolute bottom-16 left-12 p-3 bg-white border border-stone-200 rounded-2xl shadow-xl z-30 flex flex-col gap-2 animate-in fade-in w-56 text-xs font-manrope">
+                  <div className="absolute bottom-14 left-10 p-2.5 bg-white border border-stone-200 rounded-2xl shadow-xl z-30 flex flex-col gap-1.5 animate-in fade-in w-52 text-xs font-manrope">
                     <button
                       onClick={() => handleSendImage('https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80')}
-                      className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-orange-50 text-stone-700 hover:text-[#FF6B35] transition-colors cursor-pointer text-left"
+                      className="flex items-center gap-2 p-2 rounded-xl hover:bg-orange-50 text-stone-700 hover:text-[#FF6B35] transition-colors cursor-pointer text-left"
                     >
                       <ImageIcon className="w-4 h-4 text-[#FF6B35]" />
-                      <span>Foto del Taller / Actividad</span>
+                      <span>Foto de la Ruta / Actividad</span>
                     </button>
                     <button
                       onClick={() => {
@@ -835,7 +823,7 @@ export const MessagesView: React.FC = () => {
                         });
                         showToast('Ubicación compartida en el chat.');
                       }}
-                      className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-orange-50 text-stone-700 hover:text-[#FF6B35] transition-colors cursor-pointer text-left"
+                      className="flex items-center gap-2 p-2 rounded-xl hover:bg-orange-50 text-stone-700 hover:text-[#FF6B35] transition-colors cursor-pointer text-left"
                     >
                       <MapPin className="w-4 h-4 text-emerald-600" />
                       <span>Compartir Ubicación GPS</span>
@@ -845,33 +833,33 @@ export const MessagesView: React.FC = () => {
 
                 {/* Audio Recording Bar Simulation */}
                 {isRecordingAudio ? (
-                  <div className="flex items-center justify-between gap-3 p-2 bg-rose-50 border border-rose-200 rounded-2xl">
-                    <div className="flex items-center gap-2 text-rose-700 text-xs font-bold font-ibm-plex">
-                      <span className="w-3 h-3 rounded-full bg-rose-600 animate-ping" />
-                      <span>Grabando audio: 0:{recordingSeconds < 10 ? '0' : ''}{recordingSeconds}</span>
+                  <div className="flex items-center justify-between gap-2 p-1.5 bg-rose-50 border border-rose-200 rounded-2xl">
+                    <div className="flex items-center gap-2 text-rose-700 text-xs font-bold font-ibm-plex pl-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping" />
+                      <span>Grabando: 0:{recordingSeconds < 10 ? '0' : ''}{recordingSeconds}</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => setIsRecordingAudio(false)}
-                        className="px-3 py-1 text-xs text-stone-500 hover:text-stone-800"
+                        className="px-2.5 py-1 text-xs text-stone-500 hover:text-stone-800"
                       >
                         Cancelar
                       </button>
                       <button
                         onClick={handleSendVoiceNote}
-                        className="px-4 py-1.5 bg-[#FF6B35] text-white rounded-full text-xs font-bold font-outfit uppercase shadow-xs cursor-pointer"
+                        className="px-3.5 py-1 bg-[#FF6B35] text-white rounded-full text-xs font-bold font-outfit uppercase shadow-xs cursor-pointer"
                       >
                         Enviar
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <form onSubmit={handleSendMessage} className="flex items-center gap-1.5 sm:gap-2">
+                  <form onSubmit={handleSendMessage} className="flex items-center gap-1 sm:gap-2">
                     {/* Emoji Trigger */}
                     <button
                       type="button"
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className={`p-2 sm:p-2.5 rounded-full transition-colors cursor-pointer ${
+                      className={`p-1.5 sm:p-2 rounded-full transition-colors cursor-pointer shrink-0 ${
                         showEmojiPicker ? 'bg-orange-50 text-[#FF6B35]' : 'hover:bg-stone-100 text-stone-500'
                       }`}
                       title="Emojis"
@@ -883,7 +871,7 @@ export const MessagesView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowAttachmentMenu(!showAttachmentMenu)}
-                      className={`p-2 sm:p-2.5 rounded-full transition-colors cursor-pointer ${
+                      className={`p-1.5 sm:p-2 rounded-full transition-colors cursor-pointer shrink-0 ${
                         showAttachmentMenu ? 'bg-orange-50 text-[#FF6B35]' : 'hover:bg-stone-100 text-stone-500'
                       }`}
                       title="Adjuntar multimedia"
@@ -897,14 +885,14 @@ export const MessagesView: React.FC = () => {
                       placeholder="Escribe un mensaje aquí..."
                       value={inputText}
                       onChange={e => setInputText(e.target.value)}
-                      className="flex-1 bg-[#F4F1EA] border border-transparent rounded-full px-4 sm:px-5 py-2.5 text-xs sm:text-sm text-[#23404A] focus:bg-white focus:border-[#FF6B35] focus:outline-hidden transition-all font-manrope"
+                      className="flex-1 bg-[#F4F1EA] border border-transparent rounded-full px-3.5 sm:px-4 py-2 text-xs sm:text-sm text-[#23404A] focus:bg-white focus:border-[#FF6B35] focus:outline-hidden transition-all font-manrope min-w-0"
                     />
 
                     {/* Mic or Send Button */}
                     {inputText.trim() ? (
                       <button
                         type="submit"
-                        className="w-10 h-10 rounded-full bg-[#FF6B35] hover:bg-[#ff5518] text-white flex items-center justify-center shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#FF6B35] hover:bg-[#ff5518] text-white flex items-center justify-center shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
                         title="Enviar mensaje"
                       >
                         <Send className="w-4 h-4 ml-0.5" />
@@ -913,10 +901,10 @@ export const MessagesView: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setIsRecordingAudio(true)}
-                        className="w-10 h-10 rounded-full bg-stone-100 hover:bg-orange-50 text-stone-600 hover:text-[#FF6B35] flex items-center justify-center transition-all cursor-pointer shrink-0"
+                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-stone-100 hover:bg-orange-50 text-stone-600 hover:text-[#FF6B35] flex items-center justify-center transition-all cursor-pointer shrink-0"
                         title="Grabar nota de voz"
                       >
-                        <Mic className="w-5 h-5" />
+                        <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
                     )}
                   </form>
@@ -946,7 +934,7 @@ export const MessagesView: React.FC = () => {
                 <h3 className="text-sm font-extrabold text-[#23404A] font-outfit">Ficha Informativa</h3>
                 <button
                   onClick={() => setShowContactDetails(false)}
-                  className="p-1.5 rounded-full hover:bg-stone-100 text-stone-500"
+                  className="p-1.5 rounded-full hover:bg-stone-100 text-stone-500 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -989,7 +977,7 @@ export const MessagesView: React.FC = () => {
                       setActiveBookingExperience(linkedExperience);
                       setActiveScreen('explore');
                     }}
-                    className="w-full py-2 bg-[#23404A] hover:bg-[#162A31] text-white rounded-xl text-xs font-bold font-outfit uppercase transition-colors"
+                    className="w-full py-2 bg-[#23404A] hover:bg-[#162A31] text-white rounded-xl text-xs font-bold font-outfit uppercase transition-colors cursor-pointer"
                   >
                     Ver en Catálogo
                   </button>
@@ -1004,14 +992,14 @@ export const MessagesView: React.FC = () => {
               <div className="space-y-2 pt-2 border-t border-[#E8E5E0]">
                 <button
                   onClick={() => setActiveCallType('voice')}
-                  className="w-full py-2.5 px-3 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-bold flex items-center justify-center gap-2 font-outfit"
+                  className="w-full py-2.5 px-3 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-bold flex items-center justify-center gap-2 font-outfit cursor-pointer"
                 >
                   <Phone className="w-4 h-4 text-[#FF6B35]" />
                   <span>Iniciar Llamada</span>
                 </button>
                 <button
                   onClick={() => setActiveCallType('video')}
-                  className="w-full py-2.5 px-3 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-bold flex items-center justify-center gap-2 font-outfit"
+                  className="w-full py-2.5 px-3 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-bold flex items-center justify-center gap-2 font-outfit cursor-pointer"
                 >
                   <Video className="w-4 h-4 text-[#23404A]" />
                   <span>Iniciar Videollamada</span>

@@ -1,0 +1,21 @@
+{
+  "short_name": "PataDePerro",
+  "name": "Pata de Perro - Turismo Auténtico en Nicaragua",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><circle cx='96' cy='96' r='90' fill='%2323404A'/><path d='M65 100c-11.5 0-21 9.5-21 21s9.5 21 21 21 21-9.5 21-21-9.5-21-21-21zm62 0c-11.5 0-21 9.5-21 21s9.5 21 21 21 21-9.5 21-21-9.5-21-21-21zm-31-46c-13 0-23.5 10.5-23.5 23.5S83 101 96 101s23.5-10.5 23.5-23.5S109 54 96 54z' fill='%23FF6B35'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><circle cx='256' cy='256' r='240' fill='%2323404A'/><path d='M170 270c-30 0-55 25-55 55s25 55 55 55 55-25 55-55-25-55-55-55zm172 0c-30 0-55 25-55 55s25 55 55 55 55-25 55-55-25-55-55-55zm-86-125c-35 0-63 28-63 63s28 63 63 63 63-28 63-63-28-63-63-63z' fill='%23FF6B35'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#23404A",
+  "theme_color": "#23404A",
+  "display": "standalone",
+  "orientation": "portrait"
+}

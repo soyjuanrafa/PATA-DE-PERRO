@@ -2,41 +2,44 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  * Pata de Perro - Settings & About Application Screen
- * Includes Android-style 3-tap rapid trigger on "Versión de la aplicación" to unlock Developer Options
+ * Includes centralized multi-account management (switching with confirmation modal,
+ * logout with confirmation modal, add new account), Android-style 3-tap rapid trigger
+ * on "Versión de la aplicación" to unlock Developer Options, and complete system preferences.
  */
 
 import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
-import { UserRole } from '../types';
+import { UserRole, UserAccount, Turista, Anfitrion } from '../types';
 import {
   Settings,
   Info,
   Smartphone,
   Shield,
   Terminal,
-  Lock,
-  Unlock,
   KeyRound,
   CheckCircle2,
   ChevronRight,
   Database,
   Download,
-  Upload,
   RefreshCw,
-  Sliders,
   Globe,
   Bell,
   Navigation,
-  Check,
   AlertTriangle,
   Code2,
   Cpu,
   Layers,
-  Sparkles,
   X,
   User,
-  HelpCircle,
-  BookOpen,
+  Users,
+  LogOut,
+  ArrowRightLeft,
+  UserPlus,
+  Trash2,
+  MapPin,
+  Phone,
+  Mail,
+  Compass,
 } from 'lucide-react';
 
 const REQUIRED_PIN = '1102';
@@ -47,6 +50,10 @@ export const SettingsView: React.FC = () => {
     userRole,
     setUserRole,
     user,
+    accounts,
+    switchAccount,
+    logoutAccount,
+    deleteSavedAccount,
     isDevModeUnlocked,
     setIsDevModeUnlocked,
     setActiveScreen,
@@ -65,11 +72,28 @@ export const SettingsView: React.FC = () => {
   const [pinValue, setPinValue] = useState<string>('');
   const [pinError, setPinError] = useState<string | null>(null);
 
+  // Account switching and logout confirmation states
+  const [switchTargetAccount, setSwitchTargetAccount] = useState<UserAccount | null>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState<boolean>(false);
+  const [deleteTargetAccount, setDeleteTargetAccount] = useState<UserAccount | null>(null);
+
   // Local preferences
   const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(true);
   const [locationEnabled, setLocationEnabled] = useState<boolean>(true);
   const [currency, setCurrency] = useState<'USD' | 'NIO'>('USD');
   const [confirmResetOpen, setConfirmResetOpen] = useState<boolean>(false);
+
+  // Current active user ID
+  const currentUserId = user
+    ? 'id_turista' in user
+      ? user.id_turista
+      : user.id_anfitrion
+    : null;
+
+  // Other saved accounts on this device
+  const otherAccounts = accounts.filter(
+    a => a.id_usuario !== currentUserId && a.correo.toLowerCase() !== user?.correo?.toLowerCase()
+  );
 
   // Handle rapid 3-tap on Application Version
   const handleVersionClick = () => {
@@ -96,18 +120,15 @@ export const SettingsView: React.FC = () => {
     }
 
     if (newTapCount === 1) {
-      // First tap: start timer window
       tapTimeoutRef.current = setTimeout(() => {
         setTapCount(0);
       }, 2500);
     } else if (newTapCount === 2) {
-      // Second tap: Android-style hint
       showToast('¡Estás a 1 paso de activar las Opciones de desarrollador!');
       tapTimeoutRef.current = setTimeout(() => {
         setTapCount(0);
       }, 2500);
     } else if (newTapCount >= 3) {
-      // 3 rapid taps achieved! Prompt for security PIN
       setTapCount(0);
       setShowPinModal(true);
       setPinValue('');
@@ -123,7 +144,6 @@ export const SettingsView: React.FC = () => {
       setShowPinModal(false);
       setPinValue('');
       setPinError(null);
-      // Notification text explicitly requested by user: «"Opciones de desarrollador activadas"»
       showToast('Opciones de desarrollador activadas');
     } else {
       setPinError('PIN de desarrollador incorrecto. Intente nuevamente.');
@@ -141,6 +161,21 @@ export const SettingsView: React.FC = () => {
       setPinValue('');
       setPinError(null);
     }
+  };
+
+  // Execute Account Switch
+  const executeAccountSwitch = () => {
+    if (!switchTargetAccount) return;
+    const success = switchAccount(switchTargetAccount.id_usuario);
+    if (success) {
+      setSwitchTargetAccount(null);
+    }
+  };
+
+  // Execute Logout
+  const executeLogout = () => {
+    setShowLogoutConfirm(false);
+    logoutAccount();
   };
 
   return (
@@ -163,6 +198,178 @@ export const SettingsView: React.FC = () => {
           <span>Rol actual: {userRole}</span>
         </div>
       </div>
+
+      {/* SECTION: GESTIÓN DE CUENTAS DE USUARIO (Account Management, Switch & Logout) */}
+      <section className="bg-white rounded-3xl p-6 sm:p-7 shadow-sm border border-stone-200 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-100">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-[#FF6B35]/15 text-[#FF6B35] flex items-center justify-center">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-stone-900 font-outfit">
+                Gestión de Cuentas
+              </h2>
+              <p className="text-xs text-stone-500">
+                Cambia de cuenta con confirmación segura, añade nuevos perfiles o cierra sesión.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              id="btn-settings-add-account"
+              onClick={() => setActiveScreen('welcome')}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-[#FF6B35] hover:bg-[#ff5518] text-white text-xs font-bold transition-all shadow-xs cursor-pointer font-outfit"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Añadir Cuenta</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Current Active Account Card */}
+        <div>
+          <span className="block text-[11px] font-extrabold uppercase tracking-wider text-stone-500 mb-2 font-ibm-plex">
+            Cuenta Activa en Esta Sesión
+          </span>
+          {user ? (
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#FFF8F1] border border-[#FF6B35]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <img
+                  src={
+                    user.avatar ||
+                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
+                  }
+                  alt={user.nombre}
+                  className="w-14 h-14 rounded-full object-cover border-2 border-[#FF6B35] shadow-xs"
+                />
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-extrabold text-[#23404A] font-outfit">
+                      {user.nombre}
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#FF6B35] text-white uppercase font-ibm-plex">
+                      {userRole}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      Sesión Activa
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-600 font-manrope">
+                    <span className="flex items-center gap-1">
+                      <Mail className="w-3.5 h-3.5 text-stone-400" />
+                      {user.correo}
+                    </span>
+                    {user.telefono && (
+                      <span className="flex items-center gap-1">
+                        <Phone className="w-3.5 h-3.5 text-stone-400" />
+                        {user.telefono}
+                      </span>
+                    )}
+                    {(user.pais || user.departamento) && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-stone-400" />
+                        {user.departamento ? `${user.departamento}, ` : ''}{user.pais || 'Nicaragua'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Logout Button */}
+              <button
+                id="btn-settings-logout-trigger"
+                onClick={() => setShowLogoutConfirm(true)}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-colors cursor-pointer font-outfit shrink-0"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Cerrar Sesión</span>
+              </button>
+            </div>
+          ) : (
+            <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-stone-600 text-xs font-manrope flex items-center justify-between">
+              <span>No hay ninguna sesión activa. Estás navegando como invitado.</span>
+              <button
+                onClick={() => setActiveScreen('welcome')}
+                className="px-3 py-1.5 rounded-xl bg-[#FF6B35] text-white font-bold text-xs"
+              >
+                Iniciar Sesión
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Other Saved Accounts on this device */}
+        {otherAccounts.length > 0 && (
+          <div className="space-y-2.5">
+            <span className="block text-[11px] font-extrabold uppercase tracking-wider text-stone-500 font-ibm-plex">
+              Otras Cuentas Guardadas ({otherAccounts.length})
+            </span>
+            <div className="divide-y divide-stone-100 rounded-2xl border border-stone-200 overflow-hidden bg-stone-50/50">
+              {otherAccounts.map(acc => (
+                <div
+                  key={acc.id_usuario}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 bg-white hover:bg-stone-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={
+                        acc.avatar ||
+                        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
+                      }
+                      alt={acc.nombre}
+                      className="w-10 h-10 rounded-full object-cover border border-stone-300"
+                    />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-stone-900 font-outfit">
+                          {acc.nombre}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase font-ibm-plex ${
+                            acc.role === UserRole.ANFITRION
+                              ? 'bg-stone-800 text-white'
+                              : 'bg-[#FF6B35]/20 text-[#FF6B35]'
+                          }`}
+                        >
+                          {acc.role}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px] text-stone-500 font-manrope">
+                        <span>{acc.correo}</span>
+                        {acc.departamento && <span>• {acc.departamento}, {acc.pais || 'Nicaragua'}</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                    {/* Switch button triggering confirmation modal */}
+                    <button
+                      id={`btn-settings-switch-to-${acc.id_usuario}`}
+                      onClick={() => setSwitchTargetAccount(acc)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-[#FF6B35] hover:text-white text-stone-800 text-xs font-bold transition-all border border-stone-200 cursor-pointer font-outfit"
+                      title="Cambiar a esta cuenta"
+                    >
+                      <ArrowRightLeft className="w-3.5 h-3.5" />
+                      <span>Cambiar a esta cuenta</span>
+                    </button>
+
+                    {/* Delete account from device */}
+                    <button
+                      onClick={() => setDeleteTargetAccount(acc)}
+                      className="p-1.5 rounded-xl text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                      title="Eliminar del dispositivo"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* SECTION 1: Developer Options (Appears only when isDevModeUnlocked is TRUE) */}
       {isDevModeUnlocked && (
@@ -192,7 +399,7 @@ export const SettingsView: React.FC = () => {
               </div>
             </div>
 
-            {/* Master Switch: Modo desarrollador Activado / Desactivado */}
+            {/* Master Switch */}
             <div className="flex items-center gap-3 bg-stone-800/80 px-4 py-2.5 rounded-2xl border border-stone-700">
               <div className="text-right">
                 <span className="block text-xs font-bold text-stone-200">Modo desarrollador</span>
@@ -301,73 +508,29 @@ export const SettingsView: React.FC = () => {
         </section>
       )}
 
-      {/* SECTION 2: Accesos Directos de Cuenta & Soporte */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div
-          onClick={() => setActiveScreen('profile')}
-          className="bg-white hover:bg-stone-50/80 p-5 rounded-3xl border border-stone-200 shadow-xs cursor-pointer flex items-center justify-between transition-all group hover:border-[#FF6B35]/40"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#FF6B35]/10 text-[#FF6B35] flex items-center justify-center font-bold">
-              <User className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-stone-900 font-outfit group-hover:text-[#FF6B35] transition-colors">
-                Mi Perfil & Redes Sociales
-              </h3>
-              <p className="text-xs text-stone-500">
-                Foto de galería, nombre, contacto y redes
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-stone-400 group-hover:text-stone-800 transition-colors" />
-        </div>
-
-        <div
-          onClick={() => setActiveScreen('help')}
-          className="bg-white hover:bg-stone-50/80 p-5 rounded-3xl border border-stone-200 shadow-xs cursor-pointer flex items-center justify-between transition-all group hover:border-indigo-400"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-              <HelpCircle className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-stone-900 font-outfit group-hover:text-indigo-600 transition-colors">
-                Centro de Ayuda & Manual
-              </h3>
-              <p className="text-xs text-stone-500">
-                Preguntas frecuentes y guía de uso de la app
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-stone-400 group-hover:text-stone-800 transition-colors" />
-        </div>
-      </div>
-
-      {/* SECTION 3: Preferencias de la Cuenta y App */}
-      <section className="bg-white rounded-3xl p-6 sm:p-7 shadow-sm border border-stone-200 space-y-6">
-        <div className="flex items-center gap-3 pb-4 border-b border-stone-100">
-          <div className="w-10 h-10 rounded-2xl bg-stone-100 text-stone-700 flex items-center justify-center">
-            <Sliders className="w-5 h-5" />
+      {/* SECTION 2: Preferencias Generales */}
+      <section className="bg-white rounded-3xl p-6 sm:p-7 shadow-sm border border-stone-200 space-y-5">
+        <div className="flex items-center gap-3 pb-3 border-b border-stone-100">
+          <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <Bell className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-stone-900 font-outfit">Preferencias Generales</h2>
-            <p className="text-xs text-stone-500">Configura la experiencia de navegación y avisos.</p>
+            <h2 className="text-lg font-bold text-stone-900 font-outfit">Preferencias de Experiencia</h2>
+            <p className="text-xs text-stone-500">Ajustes visuales, notificaciones y geolocalización.</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-3">
           {/* Notifications Toggle */}
           <div className="flex items-center justify-between p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
             <div className="flex items-center gap-3">
               <Bell className="w-4 h-4 text-stone-500" />
               <div>
-                <span className="block text-xs font-bold text-stone-800">Notificaciones</span>
-                <span className="block text-[11px] text-stone-500">Avisos de reservas y confirmaciones</span>
+                <span className="block text-xs font-bold text-stone-800">Notificaciones de reservas y mensajes</span>
+                <span className="block text-[11px] text-stone-500">Alertas en tiempo real</span>
               </div>
             </div>
             <button
-              id="toggle-notifications-btn"
               onClick={() => {
                 setNotificationsEnabled(!notificationsEnabled);
                 showToast(notificationsEnabled ? 'Notificaciones silenciadas' : 'Notificaciones activadas');
@@ -384,17 +547,16 @@ export const SettingsView: React.FC = () => {
             </button>
           </div>
 
-          {/* Location / AR Sensor Toggle */}
+          {/* Location Toggle */}
           <div className="flex items-center justify-between p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
             <div className="flex items-center gap-3">
               <Navigation className="w-4 h-4 text-stone-500" />
               <div>
-                <span className="block text-xs font-bold text-stone-800">Geolocalización RA</span>
-                <span className="block text-[11px] text-stone-500">Cálculo de distancias y brújula</span>
+                <span className="block text-xs font-bold text-stone-800">Geolocalización Comunitaria</span>
+                <span className="block text-[11px] text-stone-500">Ordenar rutas por cercanía en Nicaragua</span>
               </div>
             </div>
             <button
-              id="toggle-location-btn"
               onClick={() => {
                 setLocationEnabled(!locationEnabled);
                 showToast(locationEnabled ? 'Geolocalización en modo manual' : 'Geolocalización activada');
@@ -449,8 +611,8 @@ export const SettingsView: React.FC = () => {
           {/* Role Switching */}
           <div className="flex items-center justify-between p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
             <div>
-              <span className="block text-xs font-bold text-stone-800">Modalidad de Uso</span>
-              <span className="block text-[11px] text-stone-500">Cambiar entre Turista y Anfitrión</span>
+              <span className="block text-xs font-bold text-stone-800">Modalidad de Rol Rápido</span>
+              <span className="block text-[11px] text-stone-500">Cambiar temporalmente entre Turista y Anfitrión</span>
             </div>
             <button
               onClick={() => {
@@ -568,7 +730,7 @@ export const SettingsView: React.FC = () => {
           <button
             id="btn-settings-export-json"
             onClick={exportBackupJSON}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold transition-colors cursor-pointer border border-stone-200"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold transition-colors cursor-pointer border border-stone-200 font-outfit"
           >
             <Download className="w-4 h-4 text-stone-600" />
             <span>Descargar Respaldo JSON</span>
@@ -577,13 +739,167 @@ export const SettingsView: React.FC = () => {
           <button
             id="btn-settings-reset-data"
             onClick={() => setConfirmResetOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-colors cursor-pointer border border-rose-200"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-colors cursor-pointer border border-rose-200 font-outfit"
           >
             <RefreshCw className="w-4 h-4 text-rose-600" />
             <span>Restablecer Datos de la App</span>
           </button>
         </div>
       </section>
+
+      {/* MODAL 1: CONFIRM ACCOUNT SWITCH (Questionnaire & Confirmation) */}
+      {switchTargetAccount && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-stone-200 space-y-5 animate-in zoom-in-95 duration-200 text-[#23404A]">
+            <div className="flex items-start justify-between">
+              <div className="w-12 h-12 rounded-2xl bg-[#FF6B35]/15 text-[#FF6B35] flex items-center justify-center">
+                <ArrowRightLeft className="w-6 h-6" />
+              </div>
+              <button
+                onClick={() => setSwitchTargetAccount(null)}
+                className="p-1.5 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#FF6B35] font-ibm-plex block">
+                Confirmación de Seguridad
+              </span>
+              <h3 className="text-lg sm:text-xl font-extrabold text-[#23404A] font-outfit mt-0.5">
+                ¿Estás seguro de cambiar de cuenta?
+              </h3>
+              <p className="text-xs text-stone-600 mt-2 font-manrope leading-relaxed">
+                Se cerrará la sesión actual de <strong>{user?.nombre || 'Usuario'}</strong> y se activará la cuenta seleccionada. Todos tus datos, reservas y mensajes se conservarán guardados en este dispositivo.
+              </p>
+            </div>
+
+            {/* Target Account Preview Card */}
+            <div className="p-3.5 rounded-2xl bg-stone-50 border border-stone-200 flex items-center gap-3.5">
+              <img
+                src={
+                  switchTargetAccount.avatar ||
+                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
+                }
+                alt={switchTargetAccount.nombre}
+                className="w-12 h-12 rounded-full object-cover border-2 border-[#FF6B35]"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-sm font-extrabold text-[#23404A] truncate font-outfit">
+                    {switchTargetAccount.nombre}
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-[#FF6B35] text-white uppercase shrink-0">
+                    {switchTargetAccount.role}
+                  </span>
+                </div>
+                <p className="text-xs text-stone-500 truncate font-manrope">{switchTargetAccount.correo}</p>
+                {switchTargetAccount.departamento && (
+                  <p className="text-[10px] text-stone-400 font-manrope">
+                    {switchTargetAccount.departamento}, {switchTargetAccount.pais || 'Nicaragua'}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setSwitchTargetAccount(null)}
+                className="flex-1 py-3 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition-colors cursor-pointer font-outfit"
+              >
+                Cancelar
+              </button>
+              <button
+                id="btn-confirm-account-switch"
+                type="button"
+                onClick={executeAccountSwitch}
+                className="flex-1 py-3 rounded-2xl bg-[#FF6B35] hover:bg-[#ff5518] text-white text-xs font-extrabold shadow-md shadow-[#FF6B35]/25 transition-all cursor-pointer font-outfit active:scale-98"
+              >
+                Sí, Cambiar Cuenta
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: CONFIRM LOGOUT */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-sm w-full shadow-2xl border border-stone-200 space-y-4 animate-in zoom-in-95 duration-200 text-[#23404A]">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center">
+              <LogOut className="w-6 h-6" />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-extrabold text-[#23404A] font-outfit">
+                ¿Cerrar tu sesión actual?
+              </h3>
+              <p className="text-xs text-stone-600 mt-1 font-manrope leading-relaxed">
+                Tu perfil, reservas y configuración quedarán guardados de forma segura en este dispositivo para cuando desees volver a ingresar.
+              </p>
+            </div>
+
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-2.5 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition-colors cursor-pointer font-outfit"
+              >
+                Cancelar
+              </button>
+              <button
+                id="btn-confirm-logout-action"
+                type="button"
+                onClick={executeLogout}
+                className="flex-1 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold shadow-md shadow-rose-600/25 transition-all cursor-pointer font-outfit active:scale-98"
+              >
+                Sí, Cerrar Sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: CONFIRM DELETE SAVED ACCOUNT */}
+      {deleteTargetAccount && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-stone-200 space-y-4 text-[#23404A]">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-[#23404A] font-outfit">
+                ¿Eliminar cuenta guardada de este dispositivo?
+              </h3>
+              <p className="text-xs text-stone-600 mt-1 font-manrope">
+                Se quitará el acceso rápido a la cuenta de <strong>{deleteTargetAccount.nombre}</strong> ({deleteTargetAccount.correo}).
+              </p>
+            </div>
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteTargetAccount(null)}
+                className="flex-1 py-2.5 rounded-2xl bg-stone-100 text-stone-700 text-xs font-bold hover:bg-stone-200 transition-colors cursor-pointer font-outfit"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteSavedAccount(deleteTargetAccount.id_usuario);
+                  setDeleteTargetAccount(null);
+                }}
+                className="flex-1 py-2.5 rounded-2xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors cursor-pointer font-outfit shadow-xs"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* SECURITY PIN DIALOG (Triggered after 3 rapid taps) */}
       {showPinModal && (
@@ -640,14 +956,14 @@ export const SettingsView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowPinModal(false)}
-                  className="flex-1 py-2.5 rounded-2xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-bold transition-colors cursor-pointer"
+                  className="flex-1 py-2.5 rounded-2xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-bold transition-colors cursor-pointer font-outfit"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   id="btn-confirm-pin-unlock"
-                  className="flex-1 py-2.5 rounded-2xl bg-[#FF6B35] hover:bg-[#ff5514] text-white text-xs font-bold shadow-lg shadow-[#FF6B35]/25 transition-colors cursor-pointer"
+                  className="flex-1 py-2.5 rounded-2xl bg-[#FF6B35] hover:bg-[#ff5514] text-white text-xs font-bold shadow-lg shadow-[#FF6B35]/25 transition-colors cursor-pointer font-outfit"
                 >
                   Confirmar PIN
                 </button>
@@ -679,7 +995,7 @@ export const SettingsView: React.FC = () => {
             <div className="flex gap-2 pt-2">
               <button
                 onClick={() => setConfirmResetOpen(false)}
-                className="flex-1 py-2.5 rounded-2xl bg-stone-100 text-stone-700 text-xs font-bold hover:bg-stone-200 transition-colors cursor-pointer"
+                className="flex-1 py-2.5 rounded-2xl bg-stone-100 text-stone-700 text-xs font-bold hover:bg-stone-200 transition-colors cursor-pointer font-outfit"
               >
                 Cancelar
               </button>
@@ -688,7 +1004,7 @@ export const SettingsView: React.FC = () => {
                   resetToDefaultData();
                   setConfirmResetOpen(false);
                 }}
-                className="flex-1 py-2.5 rounded-2xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors cursor-pointer shadow-md shadow-rose-600/20"
+                className="flex-1 py-2.5 rounded-2xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors cursor-pointer shadow-md shadow-rose-600/20 font-outfit"
               >
                 Restablecer Todo
               </button>

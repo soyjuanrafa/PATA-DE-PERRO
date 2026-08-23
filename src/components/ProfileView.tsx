@@ -56,9 +56,7 @@ export const ProfileView: React.FC = () => {
     setActiveScreen,
     reservations,
     savedExperienceIds,
-    accounts,
     logoutAccount,
-    switchAccount,
   } = useApp();
 
   const touristUser = user as Turista;
@@ -69,6 +67,8 @@ export const ProfileView: React.FC = () => {
   const [nombre, setNombre] = useState(touristUser?.nombre || 'Sofía Guevara');
   const [correo, setCorreo] = useState(touristUser?.correo || 'sofia.guevara@patadeperro.ni');
   const [telefono, setTelefono] = useState(touristUser?.telefono || '+505 8901-2345');
+  const [pais, setPais] = useState(touristUser?.pais || 'Nicaragua');
+  const [departamento, setDepartamento] = useState(touristUser?.departamento || 'León');
   const [ciudadOrigen, setCiudadOrigen] = useState(touristUser?.ciudad_origen || 'León');
   const [bio, setBio] = useState(
     touristUser?.bio ||
@@ -152,7 +152,9 @@ export const ProfileView: React.FC = () => {
       nombre: nombre.trim(),
       correo: correo.trim(),
       telefono: telefono.trim(),
-      ciudad_origen: ciudadOrigen.trim(),
+      pais: pais.trim(),
+      departamento: departamento.trim(),
+      ciudad_origen: ciudadOrigen.trim() || departamento.trim(),
       bio: bio.trim(),
       avatar: avatar,
       redesSociales: {
@@ -520,30 +522,6 @@ export const ProfileView: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
-                  Ciudad de Origen / Residencia
-                </label>
-                <div className="relative">
-                  <MapPin className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <select
-                    value={ciudadOrigen}
-                    onChange={e => setCiudadOrigen(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-stone-50 border border-stone-300 rounded-2xl text-xs sm:text-sm text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B35] font-medium"
-                  >
-                    <option value="León">León</option>
-                    <option value="Granada">Granada</option>
-                    <option value="Masaya">Masaya</option>
-                    <option value="Matagalpa">Matagalpa</option>
-                    <option value="Estelí">Estelí</option>
-                    <option value="Ometepe">Ometepe (Rivas)</option>
-                    <option value="Managua">Managua</option>
-                    <option value="San Juan del Sur">San Juan del Sur</option>
-                    <option value="Internacional">Turista Internacional</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
                   Correo Electrónico *
                 </label>
                 <div className="relative">
@@ -554,6 +532,41 @@ export const ProfileView: React.FC = () => {
                     value={correo}
                     onChange={e => setCorreo(e.target.value)}
                     placeholder="tucorreo@ejemplo.com"
+                    className="w-full pl-10 pr-4 py-3 bg-stone-50 border border-stone-300 rounded-2xl text-xs sm:text-sm text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B35] font-medium"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
+                  País de Origen *
+                </label>
+                <div className="relative">
+                  <Globe className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={pais}
+                    onChange={e => setPais(e.target.value)}
+                    placeholder="Nicaragua"
+                    className="w-full pl-10 pr-4 py-3 bg-stone-50 border border-stone-300 rounded-2xl text-xs sm:text-sm text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B35] font-medium"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
+                  Departamento / Región *
+                </label>
+                <div className="relative">
+                  <MapPin className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={departamento}
+                    onChange={e => {
+                      setDepartamento(e.target.value);
+                      setCiudadOrigen(e.target.value);
+                    }}
+                    placeholder="León"
                     className="w-full pl-10 pr-4 py-3 bg-stone-50 border border-stone-300 rounded-2xl text-xs sm:text-sm text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B35] font-medium"
                   />
                 </div>
@@ -710,83 +723,6 @@ export const ProfileView: React.FC = () => {
                     {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
                     <span>{mood}</span>
                   </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Registered Accounts Management Card */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-extrabold text-stone-900 font-outfit flex items-center gap-2">
-                  <Users className="w-5 h-5 text-[#FF6B35]" />
-                  <span>Cuentas Registradas en Este Dispositivo</span>
-                </h2>
-                <p className="text-xs text-stone-500">
-                  Tus cuentas quedan guardadas de forma segura con todos sus cambios, reservas y mensajes.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setActiveScreen('welcome')}
-                className="px-4 py-2 bg-stone-100 hover:bg-orange-50 text-stone-700 hover:text-[#FF6B35] rounded-2xl text-xs font-bold font-outfit transition-all flex items-center gap-1.5 self-start sm:self-auto border border-stone-200 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Registrar / Cambiar Cuenta</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              {accounts.map(acc => {
-                const isCurrent = acc.correo.toLowerCase() === user?.correo?.toLowerCase();
-                return (
-                  <div
-                    key={acc.id_usuario}
-                    className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-                      isCurrent
-                        ? 'bg-orange-50/70 border-[#FF6B35]/40 shadow-xs'
-                        : 'bg-stone-50 border-stone-200 hover:border-stone-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        src={acc.avatar}
-                        alt={acc.nombre}
-                        className="w-11 h-11 rounded-full object-cover border border-stone-200 shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <h4 className="text-xs sm:text-sm font-bold text-stone-900 font-outfit truncate">
-                            {acc.nombre}
-                          </h4>
-                          {isCurrent && (
-                            <span className="px-2 py-0.2 rounded-full bg-[#FF6B35] text-white text-[9px] font-black font-ibm-plex shrink-0">
-                              Activa
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-stone-500 font-ibm-plex truncate">{acc.correo}</p>
-                        <p className="text-[10px] text-stone-400 font-manrope">
-                          Rol: {acc.role} • {acc.reservas?.length || 0} reservas
-                        </p>
-                      </div>
-                    </div>
-
-                    {!isCurrent && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          switchAccount(acc.id_usuario);
-                          showToast(`Has cambiado a la cuenta de ${acc.nombre}`);
-                        }}
-                        className="px-3 py-1.5 bg-[#23404A] hover:bg-[#162A31] text-white rounded-xl text-xs font-bold font-outfit shrink-0 transition-colors cursor-pointer"
-                      >
-                        Usar
-                      </button>
-                    )}
-                  </div>
                 );
               })}
             </div>

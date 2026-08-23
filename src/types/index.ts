@@ -48,6 +48,8 @@ export interface UserAccount {
   role: UserRole;
   avatar?: string;
   telefono?: string;
+  pais?: string;
+  departamento?: string;
   ciudad?: string;
   bio?: string;
   redesSociales?: RedesSociales;
@@ -66,6 +68,8 @@ export interface Turista {
   correo: string;
   telefono?: string;
   avatar?: string;
+  pais?: string;
+  departamento?: string;
   ciudad_origen?: string;
   bio?: string;
   redesSociales?: RedesSociales;
@@ -79,6 +83,8 @@ export interface Anfitrion {
   correo: string;
   telefono: string;
   bio: string;
+  pais?: string;
+  departamento?: string;
   ciudad: string;
   avatar?: string;
   rating: number;

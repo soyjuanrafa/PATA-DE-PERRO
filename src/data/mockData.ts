@@ -291,8 +291,10 @@ export const INITIAL_USER: Turista = {
   nombre: 'Sofía Guevara',
   correo: 'sofia.guevara@patadeperro.ni',
   telefono: '+505 8901-2345',
-  avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80',
+  pais: 'Nicaragua',
+  departamento: 'León',
   ciudad_origen: 'León',
+  avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80',
   bio: 'Viajera apasionada por el turismo comunitario, las tradiciones artesanales en barro y los paisajes volcánicos de Nicaragua.',
   redesSociales: {
     instagram: '@sofi.pata_de_perro',
@@ -314,6 +316,8 @@ export const INITIAL_ACCOUNTS: UserAccount[] = [
     role: UserRole.TURISTA,
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80',
     telefono: '+505 8901-2345',
+    pais: 'Nicaragua',
+    departamento: 'León',
     ciudad: 'León',
     bio: 'Viajera apasionada por el turismo comunitario, las tradiciones artesanales en barro y los paisajes volcánicos de Nicaragua.',
     redesSociales: {
@@ -336,6 +340,8 @@ export const INITIAL_ACCOUNTS: UserAccount[] = [
     role: UserRole.ANFITRION,
     avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
     telefono: '+505 8812-3456',
+    pais: 'Nicaragua',
+    departamento: 'Masaya',
     ciudad: 'San Juan de Oriente',
     bio: 'Maestra artesana de cerámica con 25 años moldeando el barro con técnicas precolombinas.',
     redesSociales: {
@@ -353,6 +359,8 @@ export const INITIAL_ACCOUNTS: UserAccount[] = [
     role: UserRole.ANFITRION,
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
     telefono: '+505 8734-5678',
+    pais: 'Nicaragua',
+    departamento: 'León',
     ciudad: 'León',
     bio: 'Guía certificado en volcano boarding y rescate en el Volcán Cerro Negro.',
     redesSociales: {

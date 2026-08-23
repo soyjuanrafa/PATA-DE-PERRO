@@ -25,9 +25,17 @@ import { BookingModal } from './components/BookingModal';
 import { Sparkles, CheckCircle2 } from 'lucide-react';
 
 const MainAppContent: React.FC = () => {
-  const { activeScreen, toastMessage } = useApp();
+  const { activeScreen, user, toastMessage } = useApp();
 
   const renderActiveScreen = () => {
+    // If not authenticated, strictly restrict access to Onboarding or Welcome Registration/Login
+    if (!user) {
+      if (activeScreen === 'onboarding') {
+        return <OnboardingFlow />;
+      }
+      return <WelcomeAuthModal />;
+    }
+
     switch (activeScreen) {
       case 'onboarding':
         return <OnboardingFlow />;
@@ -62,17 +70,29 @@ const MainAppContent: React.FC = () => {
     }
   };
 
+  // Header is only rendered for authenticated users and outside of onboarding, welcome or ar_navigation
+  const showHeader =
+    user !== null &&
+    activeScreen !== 'onboarding' &&
+    activeScreen !== 'welcome' &&
+    activeScreen !== 'ar_navigation';
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-600 selection:text-white flex flex-col">
-      {/* Show header on all views except onboarding & full AR navigation */}
-      {activeScreen !== 'onboarding' && activeScreen !== 'ar_navigation' && <Header />}
+      {showHeader && <Header />}
 
       {/* Main View Area */}
-      <main className="flex-1">{renderActiveScreen()}</main>
+      <main className={`flex-1 ${activeScreen === 'messages' ? 'overflow-hidden flex flex-col' : ''}`}>
+        {renderActiveScreen()}
+      </main>
 
-      {/* Global Modals */}
-      <ExperienceDetailModal />
-      <BookingModal />
+      {/* Global Modals (Only active when authenticated) */}
+      {user && (
+        <>
+          <ExperienceDetailModal />
+          <BookingModal />
+        </>
+      )}
 
       {/* Global Toast Notification */}
       {toastMessage && (

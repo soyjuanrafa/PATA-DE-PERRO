@@ -17,6 +17,7 @@ import {
   ChatMessage,
   ChatThread,
   UserAccount,
+  RedesSociales,
 } from '../types';
 import {
   INITIAL_EXPERIENCES,
@@ -134,11 +135,58 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 const LOCAL_STORAGE_KEY = 'patadeperro_app_state_v2';
 const ACCOUNTS_STORAGE_KEY = 'patadeperro_registered_accounts_v1';
 const DEV_MODE_STORAGE_KEY = 'patadeperro_dev_mode_unlocked';
+const SESSION_STORAGE_KEY = 'patadeperro_active_user_session_v1';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeScreen, setActiveScreen] = useState<ActiveScreen>('onboarding');
   const [userRole, setUserRole] = useState<UserRole>(UserRole.TURISTA);
-  const [user, setUser] = useState<Turista | Anfitrion | null>(INITIAL_USER);
+  const [user, setUser] = useState<Turista | Anfitrion | null>(() => {
+    try {
+      const activeUserId = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (activeUserId) {
+        const savedAccountsStr = localStorage.getItem(ACCOUNTS_STORAGE_KEY);
+        const accs: UserAccount[] = savedAccountsStr ? JSON.parse(savedAccountsStr) : INITIAL_ACCOUNTS;
+        const found = accs.find(a => a.id_usuario === activeUserId);
+        if (found) {
+          if (found.role === UserRole.ANFITRION) {
+            return {
+              id_anfitrion: found.id_usuario,
+              nombre: found.nombre,
+              correo: found.correo,
+              telefono: found.telefono || '+505 8812-3456',
+              bio: found.bio || '',
+              pais: found.pais || 'Nicaragua',
+              departamento: found.departamento || 'Masaya',
+              ciudad: found.ciudad || 'Masaya',
+              avatar: found.avatar,
+              rating: 4.95,
+              experiencias_count: found.experienciasPropias?.length || 1,
+              verificado: true,
+              redesSociales: found.redesSociales,
+            } as Anfitrion;
+          } else {
+            return {
+              id_turista: found.id_usuario,
+              nombre: found.nombre,
+              correo: found.correo,
+              telefono: found.telefono,
+              pais: found.pais || 'Nicaragua',
+              departamento: found.departamento || 'León',
+              ciudad_origen: found.ciudad,
+              bio: found.bio,
+              avatar: found.avatar,
+              redesSociales: found.redesSociales,
+              moodsFavoritos: found.moodsFavoritos || [MoodTag.AVENTURERO, MoodTag.CULTURAL],
+              fechaRegistro: found.fechaRegistro,
+            } as Turista;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Could not restore user session', e);
+    }
+    return null;
+  });
 
   // Stored User Accounts on Device
   const [accounts, setAccounts] = useState<UserAccount[]>(() => {
@@ -229,6 +277,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         role: currentRole,
         avatar: currentUser.avatar,
         telefono: currentUser.telefono,
+        pais: currentUser.pais || (idx >= 0 ? prevAccounts[idx].pais : 'Nicaragua'),
+        departamento: currentUser.departamento || (idx >= 0 ? prevAccounts[idx].departamento : 'León'),
         ciudad: isTourist ? (currentUser as Turista).ciudad_origen : (currentUser as Anfitrion).ciudad,
         bio: currentUser.bio,
         redesSociales: currentUser.redesSociales,
@@ -250,28 +300,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  // Register Account with anti-duplicate email protection
+  // Register Account with anti-duplicate email protection & full profile questionnaires
   const registerAccount = (data: {
     nombre: string;
     correo: string;
     password?: string;
     role?: UserRole;
     avatar?: string;
+    pais?: string;
+    departamento?: string;
     ciudad?: string;
     bio?: string;
     telefono?: string;
+    redesSociales?: RedesSociales;
+    moodsFavoritos?: MoodTag[];
   }): AuthResponse => {
     const cleanNombre = sanitizeInput(data.nombre?.trim() || '');
     const cleanCorreo = sanitizeInput(data.correo?.trim() || '');
+    const cleanPais = sanitizeInput(data.pais?.trim() || 'Nicaragua');
+    const cleanDepartamento = sanitizeInput(data.departamento?.trim() || 'León');
+    const cleanTelefono = sanitizeInput(data.telefono?.trim() || '');
     const cleanPassword = data.password?.trim() || '1234';
     const role = data.role || UserRole.TURISTA;
 
     if (!cleanNombre) {
-      return { success: false, message: 'Por favor ingresa tu nombre completo.' };
+      return { success: false, message: 'El nombre completo es un campo obligatorio.' };
     }
 
     if (!cleanCorreo || !validateEmail(cleanCorreo)) {
-      return { success: false, message: 'Por favor ingresa un correo electrónico válido.' };
+      return { success: false, message: 'El correo electrónico es obligatorio y debe ser válido.' };
+    }
+
+    if (!cleanPais) {
+      return { success: false, message: 'El país de origen es un campo obligatorio.' };
+    }
+
+    if (!cleanDepartamento) {
+      return { success: false, message: 'El departamento / región es un campo obligatorio.' };
+    }
+
+    if (!cleanTelefono) {
+      return { success: false, message: 'El número de teléfono / WhatsApp es un campo obligatorio.' };
     }
 
     // CHECK DUPLICATE EMAIL: Strictly prevent registering the same email twice
@@ -280,7 +349,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (existingAccount) {
       return {
         success: false,
-        message: `El correo "${cleanCorreo}" ya se encuentra registrado en Pata de Perro. Por favor inicia sesión con tu contraseña o usa otro correo.`,
+        message: `El correo "${cleanCorreo}" ya se encuentra registrado en Pata de Perro. Por favor inicia sesión con tu contraseña o utiliza otro correo.`,
       };
     }
 
@@ -298,10 +367,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       password: cleanPassword,
       role,
       avatar: defaultAvatar,
-      telefono: data.telefono || '+505 8000-0000',
-      ciudad: data.ciudad || (role === UserRole.ANFITRION ? 'Masaya' : 'Managua'),
-      bio: data.bio || 'Amante del turismo comunitario y la riqueza cultural de Nicaragua.',
-      moodsFavoritos: [MoodTag.AVENTURERO, MoodTag.CULTURAL],
+      telefono: cleanTelefono,
+      pais: cleanPais,
+      departamento: cleanDepartamento,
+      ciudad: data.ciudad || cleanDepartamento,
+      bio: data.bio || (role === UserRole.ANFITRION ? 'Anfitrión local comprometido con el turismo vivencial y comunitario.' : 'Amante del turismo comunitario y la riqueza cultural de Nicaragua.'),
+      redesSociales: data.redesSociales,
+      moodsFavoritos: data.moodsFavoritos || [MoodTag.AVENTURERO, MoodTag.CULTURAL],
       savedExperienceIds: ['exp_tierra_01'],
       reservas: [],
       chatThreads: [],
@@ -318,13 +390,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         id_anfitrion: newId,
         nombre: cleanNombre,
         correo: cleanCorreo,
-        telefono: newAccount.telefono || '+505 8000-0000',
+        telefono: cleanTelefono,
         bio: newAccount.bio || '',
-        ciudad: newAccount.ciudad || 'Masaya',
+        pais: cleanPais,
+        departamento: cleanDepartamento,
+        ciudad: newAccount.ciudad || cleanDepartamento,
         avatar: defaultAvatar,
         rating: 5.0,
         experiencias_count: 0,
         verificado: true,
+        redesSociales: data.redesSociales,
       };
       setUser(hostUser);
       setUserRole(UserRole.ANFITRION);
@@ -334,11 +409,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         id_turista: newId,
         nombre: cleanNombre,
         correo: cleanCorreo,
-        telefono: newAccount.telefono,
-        ciudad_origen: newAccount.ciudad,
+        telefono: cleanTelefono,
+        pais: cleanPais,
+        departamento: cleanDepartamento,
+        ciudad_origen: newAccount.ciudad || cleanDepartamento,
         bio: newAccount.bio,
         avatar: defaultAvatar,
-        moodsFavoritos: [MoodTag.AVENTURERO, MoodTag.CULTURAL],
+        redesSociales: data.redesSociales,
+        moodsFavoritos: newAccount.moodsFavoritos,
         fechaRegistro: newAccount.fechaRegistro,
       };
       setUser(touristUser);
@@ -347,7 +425,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     setSavedExperienceIds(['exp_tierra_01']);
-    showToast(`¡Cuenta registrada exitosamente! Bienvenido, ${cleanNombre}.`);
+    try {
+      localStorage.setItem(SESSION_STORAGE_KEY, newId);
+    } catch (e) {
+      console.warn('Could not save session key', e);
+    }
+    showToast(`¡Cuenta y perfil creados exitosamente! Bienvenido, ${cleanNombre}.`);
     return { success: true, message: '¡Cuenta registrada exitosamente!', account: newAccount };
   };
 
@@ -386,7 +469,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         correo: found.correo,
         telefono: found.telefono || '+505 8812-3456',
         bio: found.bio || '',
-        ciudad: found.ciudad || 'Nicaragua',
+        pais: found.pais || 'Nicaragua',
+        departamento: found.departamento || 'Masaya',
+        ciudad: found.ciudad || 'Masaya',
         avatar: found.avatar,
         rating: 4.95,
         experiencias_count: found.experienciasPropias?.length || 1,
@@ -402,6 +487,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         nombre: found.nombre,
         correo: found.correo,
         telefono: found.telefono,
+        pais: found.pais || 'Nicaragua',
+        departamento: found.departamento || 'León',
         ciudad_origen: found.ciudad,
         bio: found.bio,
         avatar: found.avatar,
@@ -428,6 +515,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAccounts(prev =>
       prev.map(a => (a.id_usuario === found.id_usuario ? { ...a, ultimoAcceso: new Date().toISOString() } : a))
     );
+
+    try {
+      localStorage.setItem(SESSION_STORAGE_KEY, found.id_usuario);
+    } catch (e) {
+      console.warn('Could not save session key', e);
+    }
 
     showToast(`¡Hola de nuevo, ${found.nombre}! Sesión iniciada.`);
     return { success: true, message: '¡Sesión iniciada con éxito!', account: found };
@@ -456,6 +549,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (user) {
       syncCurrentUserToAccounts(user, userRole);
     }
+    try {
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch (e) {
+      console.warn('Could not remove session key', e);
+    }
     setUser(null);
     setActiveScreen('welcome');
     showToast('Has cerrado sesión correctamente.');
@@ -471,6 +569,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // If deleting active account, logout
     const currentId = user ? ('id_turista' in user ? user.id_turista : user.id_anfitrion) : null;
     if (currentId === accountId) {
+      try {
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+      } catch (e) {
+        console.warn('Could not remove session key', e);
+      }
       setUser(null);
       setActiveScreen('welcome');
     }
