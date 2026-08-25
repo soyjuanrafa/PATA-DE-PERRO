@@ -14,6 +14,9 @@ import {
   generateConfirmationCode,
   serializeBackup,
   parseAndValidateBackup,
+  generate2FACode,
+  verify2FACode,
+  isSessionExpired,
 } from '../utils/security';
 import { INITIAL_EXPERIENCES } from '../data/mockData';
 
@@ -148,6 +151,53 @@ export function runAllUnitTests(): { results: TestResult[]; total: number; passe
       passed: false,
       message: `Excepción: ${err?.message}`,
       durationMs: Math.round(performance.now() - t6Start),
+    });
+  }
+
+  // Test 7: Two-Factor Authentication (2FA) OTP Engine
+  const t7Start = performance.now();
+  try {
+    const otpCode = generate2FACode();
+    const isSixDigits = /^\d{6}$/.test(otpCode);
+    const verifySuccess = verify2FACode(otpCode, otpCode);
+    const verifyFail = !verify2FACode('000000', otpCode === '000000' ? '999999' : otpCode);
+    const passed = isSixDigits && verifySuccess && verifyFail;
+    results.push({
+      testName: 'Seguridad: Generación y Validación de Códigos 2FA (OTP 6 dígitos)',
+      passed,
+      message: passed ? `Generación de código (${otpCode}) y validación de 2 factores exitosa.` : 'Fallo en motor de 2FA.',
+      durationMs: Math.round(performance.now() - t7Start),
+    });
+  } catch (err: any) {
+    results.push({
+      testName: 'Seguridad: Generación y Validación de Códigos 2FA (OTP 6 dígitos)',
+      passed: false,
+      message: `Excepción: ${err?.message}`,
+      durationMs: Math.round(performance.now() - t7Start),
+    });
+  }
+
+  // Test 8: Session Lifecycle & Inactivity Expiration
+  const t8Start = performance.now();
+  try {
+    const now = Date.now();
+    const activeRecent = now - 5 * 60 * 1000; // 5 mins ago
+    const expiredPast = now - 45 * 60 * 1000; // 45 mins ago
+    const notExpired = !isSessionExpired(activeRecent, 30);
+    const expired = isSessionExpired(expiredPast, 30);
+    const passed = notExpired && expired;
+    results.push({
+      testName: 'Manejo de Estados: Detección y Expiración de Sesión por Inactividad',
+      passed,
+      message: passed ? 'Control de tiempo límite y expiración automática evaluado con éxito.' : 'Fallo en evaluación de expiración de sesión.',
+      durationMs: Math.round(performance.now() - t8Start),
+    });
+  } catch (err: any) {
+    results.push({
+      testName: 'Manejo de Estados: Detección y Expiración de Sesión por Inactividad',
+      passed: false,
+      message: `Excepción: ${err?.message}`,
+      durationMs: Math.round(performance.now() - t8Start),
     });
   }
 

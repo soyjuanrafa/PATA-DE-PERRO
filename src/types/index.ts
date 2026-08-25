@@ -60,6 +60,9 @@ export interface UserAccount {
   chatThreads?: ChatThread[];
   fechaRegistro: string;
   ultimoAcceso: string;
+  twoFactorEnabled?: boolean;
+  twoFactorCode?: string;
+  sessionTimeoutMinutes?: number;
 }
 
 export interface Turista {

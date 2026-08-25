@@ -86,6 +86,33 @@ export function serializeBackup(data: any): string {
 }
 
 /**
+ * Generates a standard 6-digit numeric OTP for Two-Factor Authentication (2FA).
+ */
+export function generate2FACode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+/**
+ * Validates a 6-digit 2FA verification token.
+ */
+export function verify2FACode(inputCode: string, expectedCode: string): boolean {
+  if (!inputCode || !expectedCode) return false;
+  return inputCode.trim() === expectedCode.trim();
+}
+
+/**
+ * Checks if a user session has expired based on inactivity duration.
+ */
+export function isSessionExpired(lastActiveTimestamp: string | number, timeoutMinutes = 30): boolean {
+  if (!lastActiveTimestamp) return false;
+  const lastActiveTime = typeof lastActiveTimestamp === 'string' ? new Date(lastActiveTimestamp).getTime() : lastActiveTimestamp;
+  if (isNaN(lastActiveTime)) return false;
+  const now = Date.now();
+  const maxInactivityMs = timeoutMinutes * 60 * 1000;
+  return now - lastActiveTime > maxInactivityMs;
+}
+
+/**
  * Deserializes and validates a backup JSON payload.
  */
 export function parseAndValidateBackup(jsonString: string): BackupSnapshot | null {

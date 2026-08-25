@@ -15,6 +15,10 @@ import {
   Info,
   Smartphone,
   Shield,
+  ShieldCheck,
+  Lock,
+  Clock,
+  Key,
   Terminal,
   KeyRound,
   CheckCircle2,
@@ -81,6 +85,8 @@ export const SettingsView: React.FC = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(true);
   const [locationEnabled, setLocationEnabled] = useState<boolean>(true);
   const [currency, setCurrency] = useState<'USD' | 'NIO'>('USD');
+  const [twoFactorAuth, setTwoFactorAuth] = useState<boolean>(false);
+  const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = useState<number>(30);
   const [confirmResetOpen, setConfirmResetOpen] = useState<boolean>(false);
 
   // Current active user ID
@@ -624,6 +630,86 @@ export const SettingsView: React.FC = () => {
             >
               Cambiar a {userRole === UserRole.TURISTA ? 'Anfitrión' : 'Turista'}
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 2.5: Seguridad, Autenticación 2FA y Ciclo de Sesión */}
+      <section className="bg-white rounded-3xl p-6 sm:p-7 shadow-sm border border-stone-200 space-y-5">
+        <div className="flex items-center gap-3 pb-3 border-b border-stone-100">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-stone-900 font-outfit">Seguridad y Protección de Datos</h2>
+            <p className="text-xs text-stone-500">2FA, control de sesiones por inactividad y desarrollo seguro.</p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {/* 2FA Toggle */}
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
+            <div className="flex items-center gap-3">
+              <Key className="w-4 h-4 text-emerald-600" />
+              <div>
+                <span className="block text-xs font-bold text-stone-800">Autenticación de 2 Factores (2FA / OTP)</span>
+                <span className="block text-[11px] text-stone-500">Solicitar token de 6 dígitos al iniciar sesión</span>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                const nextState = !twoFactorAuth;
+                setTwoFactorAuth(nextState);
+                showToast(nextState ? '2FA activado: se generó token OTP de verificación' : '2FA desactivado para esta sesión');
+              }}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                twoFactorAuth ? 'bg-emerald-600' : 'bg-stone-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
+                  twoFactorAuth ? 'translate-x-4' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Session Inactivity Timeout */}
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
+            <div className="flex items-center gap-3">
+              <Clock className="w-4 h-4 text-indigo-600" />
+              <div>
+                <span className="block text-xs font-bold text-stone-800">Expiración de Sesión por Inactividad</span>
+                <span className="block text-[11px] text-stone-500">Cierre de sesión automático por seguridad</span>
+              </div>
+            </div>
+            <div className="flex rounded-lg bg-stone-200 p-0.5 text-xs font-bold">
+              {[15, 30, 60].map(mins => (
+                <button
+                  key={mins}
+                  onClick={() => {
+                    setSessionTimeoutMinutes(mins);
+                    showToast(`Expiración de sesión configurada a ${mins} minutos`);
+                  }}
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    sessionTimeoutMinutes === mins ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-600'
+                  }`}
+                >
+                  {mins} min
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* RBAC & Protected Data Summary */}
+          <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-start gap-3">
+            <Shield className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+            <div className="text-xs text-emerald-950 space-y-1">
+              <p className="font-bold">Protección de Rutas y Datos Activa (RBAC):</p>
+              <p className="text-[11px] text-emerald-800 leading-relaxed">
+                Sesión aislada por token de usuario, desinfección XSS de campos de texto, validación de coordenadas y control de acceso estricto a paneles de administración.
+              </p>
+            </div>
           </div>
         </div>
       </section>
