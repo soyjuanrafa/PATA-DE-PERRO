@@ -1,11 +1,12 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
- * Experience Detail View Component with Brand Palette & Typography
+ * Experience Detail View Component with Multi-Language Support & Stories Launch
  */
 
 import React from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../i18n';
 import { Experiencia } from '../types';
 import { resolveImageUrl, handleImageFallback } from '../utils/imageHelper';
 import {
@@ -19,6 +20,8 @@ import {
   ShieldCheck,
   MessageSquare,
   Phone,
+  PlayCircle,
+  Sparkles,
 } from 'lucide-react';
 
 export const ExperienceDetailModal: React.FC = () => {
@@ -26,9 +29,12 @@ export const ExperienceDetailModal: React.FC = () => {
     selectedExperience,
     setSelectedExperience,
     setActiveBookingExperience,
+    setActiveStoryExperience,
     setActiveScreen,
     openOrCreateChatThread,
   } = useApp();
+
+  const { t } = useTranslation();
 
   if (!selectedExperience) return null;
 
@@ -55,14 +61,22 @@ export const ExperienceDetailModal: React.FC = () => {
             <X className="w-5 h-5" />
           </button>
 
-          {/* Category & AR Badge */}
+          {/* Category & AR & Story Badges */}
           <div className="absolute top-4 left-4 flex items-center gap-2">
             <span className="bg-[#23404A]/90 text-[#FFF8F1] backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold font-ibm-plex shadow-xs">
               {exp.categoria}
             </span>
-            <span className="bg-[#FF6B35] text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-xs font-outfit">
-              <Camera className="w-3.5 h-3.5" /> RA Disponible
-            </span>
+            <button
+              onClick={() => {
+                setSelectedExperience(null);
+                setActiveStoryExperience(exp);
+              }}
+              className="bg-[#FF5722] hover:bg-[#e04a1b] text-white px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-md font-outfit cursor-pointer animate-pulse"
+              title={t('exp.watchStory', 'Ver Historia')}
+            >
+              <PlayCircle className="w-3.5 h-3.5" />
+              <span>{t('exp.watchStory', 'Ver Historia')}</span>
+            </button>
           </div>
 
           {/* Title on Image */}
@@ -82,7 +96,7 @@ export const ExperienceDetailModal: React.FC = () => {
           <div className="grid grid-cols-3 gap-3 p-3.5 rounded-2xl bg-white border border-[#E8E5E0] text-center shadow-xs">
             <div>
               <span className="text-[10px] text-[#9A9A9A] font-bold uppercase block font-ibm-plex">
-                Calificación
+                {t('exp.rating', 'Calificación')}
               </span>
               <span className="text-[#23404A] font-extrabold text-sm flex items-center justify-center gap-1 font-outfit">
                 <Star className="w-3.5 h-3.5 fill-[#FFC83D] text-[#FFC83D]" /> {exp.rating}
@@ -90,7 +104,7 @@ export const ExperienceDetailModal: React.FC = () => {
             </div>
             <div className="border-x border-[#E8E5E0]">
               <span className="text-[10px] text-[#9A9A9A] font-bold uppercase block font-ibm-plex">
-                Duración
+                {t('exp.duration', 'Duración')}
               </span>
               <span className="text-[#23404A] font-extrabold text-sm flex items-center justify-center gap-1 font-outfit">
                 <Clock className="w-3.5 h-3.5 text-[#3FAF6C]" /> {exp.duracion}
@@ -98,7 +112,7 @@ export const ExperienceDetailModal: React.FC = () => {
             </div>
             <div>
               <span className="text-[10px] text-[#9A9A9A] font-bold uppercase block font-ibm-plex">
-                Dificultad
+                {t('exp.difficulty', 'Dificultad')}
               </span>
               <span className="text-[#23404A] font-extrabold text-sm font-outfit">
                 {exp.dificultad || 'Fácil'}
@@ -109,7 +123,7 @@ export const ExperienceDetailModal: React.FC = () => {
           {/* Description */}
           <div className="space-y-2">
             <h3 className="text-[#23404A] font-extrabold text-base font-outfit">
-              Sobre esta experiencia
+              {t('exp.about', 'Sobre esta experiencia')}
             </h3>
             <p className="text-[#162A31]/80 text-sm leading-relaxed font-manrope">
               {exp.descripcion}
@@ -135,13 +149,13 @@ export const ExperienceDetailModal: React.FC = () => {
                     <ShieldCheck className="w-4 h-4 text-[#3FAF6C]" />
                   </div>
                   <span className="text-[#9A9A9A] text-xs font-ibm-plex">
-                    Anfitrión Comunitario Verificado
+                    {t('exp.verifiedHost', 'Anfitrión Comunitario Verificado')}
                   </span>
                 </div>
               </div>
 
               <span className="text-xs bg-[#E3F4EB] text-[#3FAF6C] font-bold px-3 py-1 rounded-full border border-[#3FAF6C]/30 font-ibm-plex">
-                Reserva Directa
+                {t('exp.directBooking', 'Reserva Directa')}
               </span>
             </div>
 
@@ -160,7 +174,7 @@ export const ExperienceDetailModal: React.FC = () => {
                 className="flex-1 py-2.5 px-4 bg-[#FF6B35]/10 hover:bg-[#FF6B35] text-[#FF6B35] hover:text-white rounded-xl text-xs font-bold font-outfit transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <MessageSquare className="w-4 h-4" />
-                Contactar al Anfitrión (Chat)
+                {t('exp.contactChat', 'Contactar al Anfitrión (Chat)')}
               </button>
 
               <a
@@ -178,7 +192,9 @@ export const ExperienceDetailModal: React.FC = () => {
 
           {/* Inclusions */}
           <div className="space-y-2.5">
-            <h3 className="text-[#23404A] font-extrabold text-base font-outfit">¿Qué incluye?</h3>
+            <h3 className="text-[#23404A] font-extrabold text-base font-outfit">
+              {t('exp.whatIncludes', '¿Qué incluye?')}
+            </h3>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {exp.incluye.map((item, idx) => (
                 <li
@@ -197,7 +213,7 @@ export const ExperienceDetailModal: React.FC = () => {
         <div className="p-4 bg-white border-t border-[#E8E5E0] flex items-center justify-between gap-4 shrink-0">
           <div>
             <span className="text-xs text-[#9A9A9A] font-bold uppercase block font-ibm-plex">
-              Precio total:
+              {t('exp.totalPrice', 'Precio total:')}
             </span>
             <span className="text-[#FF6B35] text-2xl font-extrabold font-outfit">
               ${exp.precio} {exp.moneda}
@@ -205,13 +221,25 @@ export const ExperienceDetailModal: React.FC = () => {
             <span className="text-[10px] text-[#9A9A9A] block font-ibm-plex">/ persona</span>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-2.5">
+            <button
+              onClick={() => {
+                setSelectedExperience(null);
+                setActiveStoryExperience(exp);
+              }}
+              className="px-3.5 py-3 rounded-full bg-[#FFEADB] hover:bg-[#ffd9c2] text-[#FF5722] text-xs font-black flex items-center gap-1.5 border border-[#FF5722]/30 transition-colors font-outfit cursor-pointer"
+              title={t('exp.watchStory', 'Ver Historia')}
+            >
+              <PlayCircle className="w-4 h-4 text-[#FF5722]" />
+              <span className="hidden sm:inline">{t('exp.watchStory', 'Ver Historia')}</span>
+            </button>
+
             <button
               onClick={() => {
                 setActiveScreen('ar_navigation');
                 setSelectedExperience(exp);
               }}
-              className="px-4 py-3 rounded-full bg-[#FFF8F1] hover:bg-[#FFEADB] text-[#23404A] text-xs font-bold flex items-center gap-1.5 border border-[#E8E5E0] transition-colors font-outfit cursor-pointer"
+              className="px-3.5 py-3 rounded-full bg-[#FFF8F1] hover:bg-[#FFEADB] text-[#23404A] text-xs font-bold flex items-center gap-1.5 border border-[#E8E5E0] transition-colors font-outfit cursor-pointer"
               title="Abrir simulación de Realidad Aumentada"
             >
               <Camera className="w-4 h-4 text-[#FF6B35]" /> RA
@@ -223,9 +251,9 @@ export const ExperienceDetailModal: React.FC = () => {
                 setActiveBookingExperience(exp);
                 setSelectedExperience(null);
               }}
-              className="px-6 py-3 rounded-full bg-[#FF6B35] hover:bg-[#ff5518] text-white text-sm font-extrabold flex items-center gap-2 shadow-md transition-all font-outfit cursor-pointer"
+              className="px-5 sm:px-6 py-3 rounded-full bg-[#FF6B35] hover:bg-[#ff5518] text-white text-sm font-extrabold flex items-center gap-2 shadow-md transition-all font-outfit cursor-pointer"
             >
-              <Calendar className="w-4 h-4" /> Reservar Ahora
+              <Calendar className="w-4 h-4" /> {t('exp.bookNow', 'Reservar Ahora')}
             </button>
           </div>
         </div>

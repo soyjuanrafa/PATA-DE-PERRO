@@ -18,6 +18,9 @@ import {
   ChatThread,
   UserAccount,
   RedesSociales,
+  PublishedStoryReview,
+  UserStory,
+  UserStatusNote,
 } from '../types';
 import {
   INITIAL_EXPERIENCES,
@@ -98,6 +101,18 @@ interface AppContextType {
   setSearchQuery: (query: string) => void;
   selectedExperience: Experiencia | null;
   setSelectedExperience: (exp: Experiencia | null) => void;
+  activeStoryExperience: Experiencia | null;
+  setActiveStoryExperience: (exp: Experiencia | null) => void;
+  storyModalMode: 'viewer' | 'upload_user_story' | 'user_stories';
+  setStoryModalMode: (mode: 'viewer' | 'upload_user_story' | 'user_stories') => void;
+  openStoryViewer: (exp: Experiencia | null, mode?: 'viewer' | 'upload_user_story' | 'user_stories') => void;
+  publishedStoryReviews: PublishedStoryReview[];
+  addPublishedStoryReview: (review: PublishedStoryReview) => void;
+  userStories: UserStory[];
+  addUserStory: (story: Omit<UserStory, 'id' | 'date'>) => UserStory;
+  deleteUserStory: (storyId: string) => void;
+  statusNotes: UserStatusNote[];
+  updateSelfNote: (text: string, emoji?: string) => void;
   activeBookingExperience: Experiencia | null;
   setActiveBookingExperience: (exp: Experiencia | null) => void;
   savedExperienceIds: string[];
@@ -136,6 +151,53 @@ const LOCAL_STORAGE_KEY = 'patadeperro_app_state_v2';
 const ACCOUNTS_STORAGE_KEY = 'patadeperro_registered_accounts_v1';
 const DEV_MODE_STORAGE_KEY = 'patadeperro_dev_mode_unlocked';
 const SESSION_STORAGE_KEY = 'patadeperro_active_user_session_v1';
+const PUBLISHED_STORIES_STORAGE_KEY = 'patadeperro_published_stories_v1';
+const USER_STORIES_STORAGE_KEY = 'patadeperro_user_stories_v1';
+const STATUS_NOTES_STORAGE_KEY = 'patadeperro_status_notes_v1';
+
+const INITIAL_STATUS_NOTES: UserStatusNote[] = [
+  {
+    userId: 'usr_self',
+    userName: 'Tu nota',
+    userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+    noteText: 'Planeando mi próxima aventura 🐾',
+    emoji: '🐾',
+    updatedAt: 'hace 10 min',
+    isSelf: true,
+  },
+  {
+    userId: 'host_marta',
+    userName: 'Doña Marta',
+    userAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
+    noteText: 'Cocinando quesillo caliente 🧀',
+    emoji: '🧀',
+    updatedAt: 'hace 25 min',
+  },
+  {
+    userId: 'host_carlos',
+    userName: 'Don Carlos',
+    userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+    noteText: 'Sandboarding en Cerro Negro 🌋',
+    emoji: '🌋',
+    updatedAt: 'hace 1 h',
+  },
+  {
+    userId: 'host_elena',
+    userName: 'Artesanos',
+    userAvatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80',
+    noteText: 'Modelando barro tradicional 🏺',
+    emoji: '🏺',
+    updatedAt: 'hace 2 h',
+  },
+  {
+    userId: 'host_isletas',
+    userName: 'Capitán Silvio',
+    userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
+    noteText: 'Navegando en Isletas ⛵',
+    emoji: '⛵',
+    updatedAt: 'hace 3 h',
+  },
+];
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeScreen, setActiveScreen] = useState<ActiveScreen>('onboarding');
@@ -212,7 +274,162 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedMood, setSelectedMood] = useState<MoodTag | 'Todos'>('Todos');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedExperience, setSelectedExperience] = useState<Experiencia | null>(null);
+  const [activeStoryExperience, setActiveStoryExperience] = useState<Experiencia | null>(null);
+  const [storyModalMode, setStoryModalMode] = useState<'viewer' | 'upload_user_story' | 'user_stories'>('viewer');
+
+  const openStoryViewer = (
+    exp: Experiencia | null,
+    mode: 'viewer' | 'upload_user_story' | 'user_stories' = 'viewer'
+  ) => {
+    setActiveStoryExperience(exp || experiences[0] || null);
+    setStoryModalMode(mode);
+  };
+  const [publishedStoryReviews, setPublishedStoryReviews] = useState<PublishedStoryReview[]>(() => {
+    try {
+      const saved = localStorage.getItem(PUBLISHED_STORIES_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.warn('Could not read cached published stories', e);
+    }
+    return [];
+  });
+
+  const [userStories, setUserStories] = useState<UserStory[]>(() => {
+    try {
+      const saved = localStorage.getItem(USER_STORIES_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.warn('Could not read cached user stories', e);
+    }
+    return [];
+  });
+
+  const [statusNotes, setStatusNotes] = useState<UserStatusNote[]>(() => {
+    try {
+      const saved = localStorage.getItem(STATUS_NOTES_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.warn('Could not read cached status notes', e);
+    }
+    return INITIAL_STATUS_NOTES;
+  });
+
   const [activeBookingExperience, setActiveBookingExperience] = useState<Experiencia | null>(null);
+
+  // Add Published Story Review with automatic persistence
+  const addPublishedStoryReview = (review: PublishedStoryReview) => {
+    setPublishedStoryReviews(prev => {
+      const updated = [review, ...prev];
+      try {
+        localStorage.setItem(PUBLISHED_STORIES_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Could not persist published story review', e);
+      }
+      return updated;
+    });
+
+    // If photos or videos are attached, also save to userStories so user can view it in "Tu historia"
+    if (review.photos && review.photos.length > 0) {
+      review.photos.forEach((photo) => {
+        addUserStory({
+          type: 'foto',
+          mediaUrl: photo,
+          title: review.experienceTitle,
+          caption: review.comment,
+          location: review.experienceTitle || 'Nicaragua',
+        });
+      });
+    }
+    if (review.videoUrl) {
+      addUserStory({
+        type: 'video',
+        mediaUrl: review.videoUrl,
+        title: review.experienceTitle,
+        caption: review.comment,
+        location: review.experienceTitle || 'Nicaragua',
+      });
+    }
+
+    // Also increase review count on experience
+    setExperiences(prev =>
+      prev.map(e => {
+        if (e.id_exp === review.experienceId) {
+          const newCount = (e.resenas_count || 0) + 1;
+          const newRating = Number(
+            (((e.rating * (e.resenas_count || 1)) + review.adventureRating) / newCount).toFixed(2)
+          );
+          return { ...e, resenas_count: newCount, rating: newRating };
+        }
+        return e;
+      })
+    );
+  };
+
+  // Add User Story (photos or videos uploaded by traveler)
+  const addUserStory = (storyData: Omit<UserStory, 'id' | 'date'>): UserStory => {
+    const newStory: UserStory = {
+      ...storyData,
+      id: `usr_story_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setUserStories(prev => {
+      const updated = [newStory, ...prev];
+      try {
+        localStorage.setItem(USER_STORIES_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Could not persist user story', e);
+      }
+      return updated;
+    });
+
+    return newStory;
+  };
+
+  const deleteUserStory = (storyId: string) => {
+    setUserStories(prev => {
+      const updated = prev.filter(s => s.id !== storyId);
+      try {
+        localStorage.setItem(USER_STORIES_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Could not persist user stories deletion', e);
+      }
+      return updated;
+    });
+  };
+
+  // Update self status note
+  const updateSelfNote = (text: string, emoji: string = '🐾') => {
+    setStatusNotes(prev => {
+      const updated = prev.map(n =>
+        n.isSelf
+          ? {
+              ...n,
+              noteText: text,
+              emoji,
+              updatedAt: 'justo ahora',
+              userName: user?.nombre ? `${user.nombre.split(' ')[0]} (Tú)` : 'Tu nota',
+              userAvatar: user?.avatar || n.userAvatar,
+            }
+          : n
+      );
+      try {
+        localStorage.setItem(STATUS_NOTES_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Could not persist status notes', e);
+      }
+      return updated;
+    });
+  };
   const [savedExperienceIds, setSavedExperienceIds] = useState<string[]>(['exp_tierra_01', 'exp_tierra_04']);
   const [isDevModeUnlocked, setDevModeUnlockedState] = useState<boolean>(() => {
     try {
@@ -1072,6 +1289,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSearchQuery,
         selectedExperience,
         setSelectedExperience,
+        activeStoryExperience,
+        setActiveStoryExperience,
+        storyModalMode,
+        setStoryModalMode,
+        openStoryViewer,
+        publishedStoryReviews,
+        addPublishedStoryReview,
+        userStories,
+        addUserStory,
+        deleteUserStory,
+        statusNotes,
+        updateSelfNote,
         activeBookingExperience,
         setActiveBookingExperience,
         savedExperienceIds,

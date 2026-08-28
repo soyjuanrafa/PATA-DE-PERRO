@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { AppProvider, useApp } from './context/AppContext';
+import { I18nProvider } from './i18n';
 import { Header } from './components/Header';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { WelcomeAuthModal } from './components/WelcomeAuthModal';
@@ -22,10 +23,20 @@ import { DevOptionsView } from './components/DevOptionsView';
 import { SettingsView } from './components/SettingsView';
 import { ExperienceDetailModal } from './components/ExperienceDetailModal';
 import { BookingModal } from './components/BookingModal';
+import { ExperienceStoriesModal } from './components/ExperienceStoriesModal';
 import { Sparkles, CheckCircle2 } from 'lucide-react';
 
 const MainAppContent: React.FC = () => {
-  const { activeScreen, user, toastMessage } = useApp();
+  const {
+    activeScreen,
+    user,
+    toastMessage,
+    activeStoryExperience,
+    setActiveStoryExperience,
+    storyModalMode,
+    setStoryModalMode,
+    addPublishedStoryReview,
+  } = useApp();
 
   const renderActiveScreen = () => {
     // If not authenticated, strictly restrict access to Onboarding or Welcome Registration/Login
@@ -94,6 +105,21 @@ const MainAppContent: React.FC = () => {
         </>
       )}
 
+      {/* Experience Stories Viewer Modal */}
+      {activeStoryExperience && (
+        <ExperienceStoriesModal
+          experience={activeStoryExperience}
+          initialMode={storyModalMode}
+          onClose={() => {
+            setActiveStoryExperience(null);
+            setStoryModalMode('viewer');
+          }}
+          onStoryPublished={(review) => {
+            addPublishedStoryReview(review);
+          }}
+        />
+      )}
+
       {/* Global Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-stone-900 text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-2xl border border-stone-700 flex items-center gap-2 animate-bounce">
@@ -107,9 +133,11 @@ const MainAppContent: React.FC = () => {
 
 export function App() {
   return (
-    <AppProvider>
-      <MainAppContent />
-    </AppProvider>
+    <I18nProvider>
+      <AppProvider>
+        <MainAppContent />
+      </AppProvider>
+    </I18nProvider>
   );
 }
 

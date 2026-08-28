@@ -8,6 +8,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../i18n';
 import { UserRole, ChatThread, ChatMessage } from '../types';
 import { resolveImageUrl, handleImageFallback } from '../utils/imageHelper';
 import {
@@ -87,16 +88,27 @@ export const MessagesView: React.FC = () => {
     setActiveBookingExperience,
     experiences,
     showToast,
+    statusNotes,
+    updateSelfNote,
+    setActiveStoryExperience,
   } = useApp();
+
+  const { t } = useTranslation();
 
   // Navigation & filtering state
   const [searchQuery, setSearchQuery] = useState('');
   const [inChatSearch, setInChatSearch] = useState('');
   const [showInChatSearch, setShowInChatSearch] = useState(false);
   const [inputText, setInputText] = useState('');
-  const [filterMode, setFilterMode] = useState<'all' | 'unread' | 'routes'>('all');
+  const [filterMode, setFilterMode] = useState<'all' | 'unread' | 'routes' | 'general' | 'requests'>('all');
   const [showMobileList, setShowMobileList] = useState(!activeThreadId);
   const [showContactDetails, setShowContactDetails] = useState(false);
+
+  // Status Note Editor State (Instagram Direct Notes)
+  const [isEditingSelfNote, setIsEditingSelfNote] = useState(false);
+  const selfNote = statusNotes.find(n => n.isSelf);
+  const [noteInputText, setNoteInputText] = useState(selfNote?.noteText || '');
+  const [noteEmoji, setNoteEmoji] = useState(selfNote?.emoji || '🐾');
 
   // Popovers & Interactive Features
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -323,61 +335,230 @@ export const MessagesView: React.FC = () => {
               </div>
             </div>
 
-            {/* Search Bar & Filters */}
-            <div className="p-2 sm:p-3 bg-white border-b border-[#E8E5E0] space-y-2 shrink-0">
+            {/* 1. Well-Squared Search Bar */}
+            <div className="p-2.5 sm:p-3 bg-white border-b border-stone-200 shrink-0">
               <div className="relative">
                 <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Buscar conversación..."
+                  placeholder={t('explore.searchPlaceholder', 'Buscar conversación o lugar...')}
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-7 py-1.5 bg-[#F4F1EA] border border-transparent rounded-xl text-xs font-manrope text-[#23404A] focus:bg-white focus:border-[#FF6B35] focus:outline-hidden transition-all"
+                  className="w-full pl-8 pr-7 py-2 bg-[#F4F1EA] border border-transparent rounded-xl text-xs font-manrope text-[#23404A] placeholder-stone-400 focus:bg-white focus:border-[#FF5722] focus:outline-hidden transition-all"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
+            </div>
 
-              {/* Filter Pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+            {/* 2. Well-Squared Instagram Direct Status Notes Reel */}
+            <div className="px-3 bg-[#FAF7F2] border-b border-stone-200/90 shrink-0">
+              <div className="flex items-center gap-3.5 overflow-x-auto pt-4 pb-2 scrollbar-none">
+                {/* User own status note bubble */}
+                <div className="flex flex-col items-center shrink-0 group relative">
+                  {/* Floating Speech Bubble for Note */}
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingSelfNote(true)}
+                    className="absolute -top-3 z-10 max-w-[80px] bg-white border border-stone-200 shadow-sm px-2 py-0.5 rounded-2xl text-[9.5px] font-bold text-stone-800 truncate hover:scale-105 transition-transform cursor-pointer"
+                  >
+                    {selfNote?.noteText ? (
+                      <span className="truncate block">
+                        {selfNote.emoji} {selfNote.noteText}
+                      </span>
+                    ) : (
+                      <span className="text-[#FF5722] font-black">+ Tu nota</span>
+                    )}
+                  </button>
+
+                  {/* Avatar with gradient ring */}
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingSelfNote(true)}
+                    className="relative p-0.5 rounded-full bg-gradient-to-tr from-[#FF5722] to-[#FFC83D] mt-1.5 cursor-pointer hover:scale-105 transition-transform"
+                    title="Toca para compartir un estado o nota"
+                  >
+                    <div className="w-13 h-13 rounded-full p-0.5 bg-white overflow-hidden flex items-center justify-center">
+                      {user?.avatar ? (
+                        <img
+                          src={user.avatar}
+                          alt={user.nombre}
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-orange-100 flex items-center justify-center text-[#FF5722]">
+                          <User className="w-5 h-5" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#FF5722] text-white flex items-center justify-center text-[10px] font-bold border border-white shadow-2xs">
+                      +
+                    </div>
+                  </button>
+                  <span className="text-[10px] font-bold text-stone-700 font-outfit mt-1 max-w-[65px] truncate">
+                    {t('msg.yourNote', 'Tu nota')}
+                  </span>
+                </div>
+
+                {/* Community Hosts Status Notes */}
+                {statusNotes
+                  .filter(n => !n.isSelf)
+                  .map(note => (
+                    <div
+                      key={note.userId}
+                      onClick={() => {
+                        showToast(`Nota de ${note.userName}: "${note.noteText}"`);
+                      }}
+                      className="flex flex-col items-center shrink-0 group relative cursor-pointer"
+                    >
+                      {/* Floating speech bubble */}
+                      <div className="absolute -top-3 z-10 max-w-[84px] bg-white border border-stone-200 shadow-sm px-2 py-0.5 rounded-2xl text-[9.5px] font-bold text-stone-800 truncate">
+                        <span className="truncate block">
+                          {note.emoji} {note.noteText}
+                        </span>
+                      </div>
+
+                      {/* Avatar */}
+                      <div className="relative p-0.5 rounded-full bg-gradient-to-tr from-[#2E9D62] to-[#FFC83D] mt-1.5 group-hover:scale-105 transition-transform">
+                        <div className="w-13 h-13 rounded-full p-0.5 bg-white overflow-hidden">
+                          <img
+                            src={note.userAvatar}
+                            alt={note.userName}
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold text-stone-700 font-outfit mt-1 max-w-[65px] truncate text-center">
+                        {note.userName.split(' ')[0]}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            {/* 3. Well-Squared 4-Tab Categorization Bar */}
+            <div className="p-1.5 bg-white border-b border-stone-200 shrink-0">
+              <div className="grid grid-cols-4 gap-0.5 sm:gap-1 text-[9.5px] sm:text-[11px] font-bold font-outfit">
                 <button
+                  type="button"
                   onClick={() => setFilterMode('all')}
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold font-outfit whitespace-nowrap transition-all cursor-pointer ${
+                  className={`py-1.5 px-0.5 sm:px-1 rounded-lg text-center truncate cursor-pointer transition-all ${
                     filterMode === 'all'
-                      ? 'bg-[#23404A] text-white shadow-2xs'
-                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                      ? 'bg-[#23404A] text-white font-black shadow-xs'
+                      : 'text-stone-600 hover:bg-stone-100'
                   }`}
                 >
-                  Todos ({chatThreads.length})
+                  {t('msg.principal', 'Principal')}
                 </button>
                 <button
-                  onClick={() => setFilterMode('unread')}
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold font-outfit whitespace-nowrap transition-all cursor-pointer ${
-                    filterMode === 'unread'
-                      ? 'bg-[#FF6B35] text-white shadow-2xs'
-                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                  type="button"
+                  onClick={() => setFilterMode('general')}
+                  className={`py-1.5 px-0.5 sm:px-1 rounded-lg text-center truncate cursor-pointer transition-all ${
+                    filterMode === 'general'
+                      ? 'bg-[#23404A] text-white font-black shadow-xs'
+                      : 'text-stone-600 hover:bg-stone-100'
                   }`}
                 >
-                  No leídos
+                  {t('msg.general', 'General')}
                 </button>
                 <button
+                  type="button"
+                  onClick={() => setFilterMode('requests')}
+                  className={`py-1.5 px-0.5 sm:px-1 rounded-lg text-center truncate cursor-pointer transition-all ${
+                    filterMode === 'requests'
+                      ? 'bg-[#23404A] text-white font-black shadow-xs'
+                      : 'text-stone-600 hover:bg-stone-100'
+                  }`}
+                >
+                  {t('msg.requests', 'Solicitudes')}
+                </button>
+                <button
+                  type="button"
                   onClick={() => setFilterMode('routes')}
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold font-outfit whitespace-nowrap transition-all cursor-pointer ${
+                  className={`py-1.5 px-0.5 sm:px-1 rounded-lg text-center truncate cursor-pointer transition-all ${
                     filterMode === 'routes'
-                      ? 'bg-[#E07A5F] text-white shadow-2xs'
-                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                      ? 'bg-[#FF5722] text-white font-black shadow-xs'
+                      : 'text-stone-600 hover:bg-stone-100'
                   }`}
                 >
-                  Rutas
+                  {t('msg.routes', 'Rutas')}
                 </button>
               </div>
             </div>
+
+            {/* Modal / Dialog for editing own status note */}
+            {isEditingSelfNote && (
+              <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+                <div className="bg-white rounded-3xl p-5 max-w-xs w-full shadow-2xl border border-stone-200 space-y-3.5 animate-scale-up">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-black text-stone-900 font-outfit">
+                      {t('msg.shareNote', 'Compartir una nota')}
+                    </h3>
+                    <button
+                      onClick={() => setIsEditingSelfNote(false)}
+                      className="p-1 rounded-full text-stone-400 hover:text-stone-700 cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-stone-500 font-manrope">
+                    {t(
+                      'msg.shareNoteDesc',
+                      'Escribe lo que estás haciendo o pensando. Tus anfitriones y amigos lo verán durante 24 horas.'
+                    )}
+                  </p>
+
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={noteEmoji}
+                      onChange={e => setNoteEmoji(e.target.value)}
+                      className="text-lg bg-stone-100 rounded-xl px-2 py-1.5 border border-stone-200"
+                    >
+                      {['🐾', '🌋', '🎨', '☕', '🍫', '🏖️', '🚣‍♂️', '🌿', '✨', '🎒'].map(em => (
+                        <option key={em} value={em}>
+                          {em}
+                        </option>
+                      ))}
+                    </select>
+
+                    <input
+                      type="text"
+                      maxLength={60}
+                      value={noteInputText}
+                      onChange={e => setNoteInputText(e.target.value)}
+                      placeholder={t('msg.yourNote', '¿Qué estás planeando hoy?')}
+                      className="flex-1 text-xs bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#FF5722]"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                      onClick={() => setIsEditingSelfNote(false)}
+                      className="px-3 py-1.5 text-xs font-bold text-stone-500 hover:text-stone-800 cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={() => {
+                        updateSelfNote(noteInputText.trim() || 'Explorando con Pata de Perro', noteEmoji);
+                        setIsEditingSelfNote(false);
+                        showToast('¡Nota de estado actualizada!');
+                      }}
+                      className="px-4 py-1.5 text-xs font-black bg-[#FF5722] hover:bg-[#e04a1b] text-white rounded-xl shadow-xs cursor-pointer font-outfit"
+                    >
+                      {t('msg.saveNote', 'Compartir')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Conversation Feed */}
             <div className="flex-1 overflow-y-auto divide-y divide-[#E8E5E0]/60 bg-white">
@@ -508,18 +689,18 @@ export const MessagesView: React.FC = () => {
                       <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full" />
                     </div>
 
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <h3 className="text-xs sm:text-sm font-extrabold text-[#23404A] font-outfit truncate group-hover:text-[#FF6B35] transition-colors">
+                    <div className="min-w-0 flex flex-col justify-center">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <h3 className="text-xs sm:text-sm font-extrabold text-[#23404A] font-outfit truncate group-hover:text-[#FF6B35] transition-colors min-w-0">
                           {contactName}
                         </h3>
-                        <span className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-extrabold uppercase rounded-full bg-orange-50 text-[#FF6B35] font-ibm-plex">
+                        <span className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-extrabold uppercase rounded-full bg-orange-50 text-[#FF6B35] font-ibm-plex shrink-0">
                           {isAnfitrion ? 'Turista' : 'Anfitrión'}
                         </span>
                       </div>
-                      <p className="text-[10px] sm:text-[11px] text-emerald-700 font-medium truncate font-manrope flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-                        <span>En línea • {activeThread.exp_titulo || 'Ruta Creativa'}</span>
+                      <p className="text-[10px] sm:text-[11px] text-emerald-700 font-medium font-manrope flex items-center gap-1 min-w-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0 block" />
+                        <span className="truncate">En línea • {activeThread.exp_titulo || 'Ruta Creativa'}</span>
                       </p>
                     </div>
                   </button>

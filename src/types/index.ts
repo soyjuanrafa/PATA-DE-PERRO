@@ -206,9 +206,62 @@ export interface BackupSnapshot {
   };
 }
 
+export interface ExperienceStory {
+  id: string;
+  experienceId: string;
+  order: number;
+  type: 'image' | 'video' | 'text';
+  mediaUrl: string;
+  title: string;
+  description: string;
+  quote?: string;
+  quoteAuthor?: string;
+  culturalElement?: string;
+  duration?: number; // duration in seconds
+  language?: string;
+  createdAt?: string;
+}
+
+export interface UserStory {
+  id: string;
+  type: 'foto' | 'video';
+  mediaUrl: string;
+  title: string;
+  caption?: string;
+  location?: string;
+  date: string;
+}
+
+export interface PublishedStoryReview {
+  id: string;
+  experienceId: string;
+  experienceTitle: string;
+  experienceImage?: string;
+  authorName: string;
+  authorAvatar?: string;
+  sharedTypes: ('foto' | 'video' | 'historia')[];
+  photos?: string[];
+  videoUrl?: string;
+  comment: string;
+  adventureRating: number;
+  hostRating: number;
+  publishedAt: string;
+}
+
+export interface UserStatusNote {
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  noteText: string;
+  emoji?: string;
+  updatedAt: string;
+  isSelf?: boolean;
+}
+
 export interface TestResult {
   testName: string;
   passed: boolean;
   message: string;
   durationMs: number;
 }
+

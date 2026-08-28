@@ -9,6 +9,7 @@
 
 import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation, SUPPORTED_LANGUAGES } from '../i18n';
 import { UserRole, UserAccount, Turista, Anfitrion } from '../types';
 import {
   Settings,
@@ -65,6 +66,8 @@ export const SettingsView: React.FC = () => {
     resetToDefaultData,
     showToast,
   } = useApp();
+
+  const { t, language, setLanguage } = useTranslation();
 
   // Multi-tap detection state for Version
   const [tapCount, setTapCount] = useState<number>(0);
@@ -527,6 +530,50 @@ export const SettingsView: React.FC = () => {
         </div>
 
         <div className="space-y-3">
+          {/* Visual Multi-Language Selector */}
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-orange-50/60 to-emerald-50/60 border border-stone-200/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Globe className="w-5 h-5 text-[#FF5722]" />
+                <div>
+                  <span className="block text-xs font-bold text-stone-900">
+                    {t('settings.language', 'Idioma de la aplicación')}
+                  </span>
+                  <span className="block text-[11px] text-stone-500">
+                    {t('settings.languageDesc', 'Selecciona tu idioma preferido para toda la interfaz')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Language grid cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+              {SUPPORTED_LANGUAGES.map(lang => {
+                const isSelected = language === lang.code;
+                return (
+                  <button
+                    key={lang.code}
+                    onClick={() => {
+                      setLanguage(lang.code);
+                      showToast(`${t('settings.languageChanged', 'Idioma cambiado a')} ${lang.name}`);
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border-2 transition-all cursor-pointer text-left ${
+                      isSelected
+                        ? 'bg-white border-[#FF5722] shadow-sm text-stone-900 ring-2 ring-[#FF5722]/20'
+                        : 'bg-white/70 border-stone-200 text-stone-700 hover:bg-white hover:border-stone-300'
+                    }`}
+                  >
+                    <span className="text-xl shrink-0">{lang.flag}</span>
+                    <div className="min-w-0">
+                      <span className="block text-xs font-black truncate font-outfit">{lang.name}</span>
+                      <span className="block text-[10px] text-stone-500 truncate">{lang.nativeName}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Notifications Toggle */}
           <div className="flex items-center justify-between p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
             <div className="flex items-center gap-3">

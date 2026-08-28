@@ -1,11 +1,12 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
- * Pata de Perro Header Component with Official Typography, Palette & Account Management
+ * Pata de Perro Header Component with Multi-Language Support & Official Styling
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useApp, ActiveScreen } from '../context/AppContext';
+import { useTranslation, SUPPORTED_LANGUAGES } from '../i18n';
 import { UserRole } from '../types';
 import { Logo } from './Logo';
 import {
@@ -23,6 +24,9 @@ import {
   HelpCircle,
   MessageSquare,
   LogOut,
+  Globe,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -31,7 +35,6 @@ export const Header: React.FC = () => {
     setActiveScreen,
     userRole,
     setUserRole,
-    user,
     logoutAccount,
     isDevModeUnlocked,
     exportBackupJSON,
@@ -39,28 +42,43 @@ export const Header: React.FC = () => {
     showToast,
   } = useApp();
 
+  const { t, language, setLanguage, currentLanguageInfo } = useTranslation();
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const langDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langDropdownRef.current && !langDropdownRef.current.contains(event.target as Node)) {
+        setLangDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const navItems: { id: ActiveScreen; label: string; icon: React.ReactNode; badge?: number }[] = [
-    { id: 'explore', label: 'Explorar', icon: <Compass className="w-4 h-4" /> },
-    { id: 'categories', label: 'Categorías', icon: <Grid className="w-4 h-4" /> },
-    { id: 'map', label: 'Mapa & RA', icon: <MapPin className="w-4 h-4" /> },
+    { id: 'explore', label: t('nav.explore', 'Explorar'), icon: <Compass className="w-4 h-4" /> },
+    { id: 'categories', label: t('nav.categories', 'Categorías'), icon: <Grid className="w-4 h-4" /> },
+    { id: 'map', label: t('nav.map', 'Mapa & RA'), icon: <MapPin className="w-4 h-4" /> },
     {
       id: 'messages',
-      label: 'Mensajes',
+      label: t('nav.messages', 'Mensajes'),
       icon: <MessageSquare className="w-4 h-4" />,
       badge: totalUnreadMessagesCount > 0 ? totalUnreadMessagesCount : undefined,
     },
-    { id: 'reservations', label: 'Mis Reservas', icon: <Calendar className="w-4 h-4" /> },
-    { id: 'profile', label: 'Mi Perfil', icon: <User className="w-4 h-4" /> },
-    { id: 'help', label: 'Ayuda', icon: <HelpCircle className="w-4 h-4" /> },
+    { id: 'reservations', label: t('nav.reservations', 'Mis Reservas'), icon: <Calendar className="w-4 h-4" /> },
+    { id: 'profile', label: t('nav.profile', 'Mi Perfil'), icon: <User className="w-4 h-4" /> },
+    { id: 'help', label: t('nav.help', 'Ayuda'), icon: <HelpCircle className="w-4 h-4" /> },
   ];
 
   if (userRole === UserRole.ANFITRION) {
     navItems.push({
       id: 'host_dashboard',
-      label: 'Panel Anfitrión',
+      label: t('nav.hostDashboard', 'Panel Anfitrión'),
       icon: <UserCheck className="w-4 h-4" />,
     });
   }
@@ -68,7 +86,7 @@ export const Header: React.FC = () => {
   // Configuración button is always available
   navItems.push({
     id: 'settings',
-    label: 'Configuración',
+    label: t('nav.settings', 'Configuración'),
     icon: <Settings className="w-4 h-4" />,
   });
 
@@ -76,7 +94,7 @@ export const Header: React.FC = () => {
     logoutAccount();
     setShowLogoutConfirm(false);
     setMobileMenuOpen(false);
-    showToast('Has cerrado sesión exitosamente.');
+    showToast(t('nav.logout', 'Has cerrado sesión exitosamente.'));
   };
 
   return (
@@ -119,8 +137,48 @@ export const Header: React.FC = () => {
           })}
         </nav>
 
-        {/* Right Tools (Role Switcher, Dev Options, Backup) */}
+        {/* Right Tools (Language Switcher, Role Switcher, Dev Options, Backup) */}
         <div className="hidden sm:flex items-center gap-2">
+          {/* Visual Multi-Language Selector Dropdown */}
+          <div className="relative" ref={langDropdownRef}>
+            <button
+              id="btn-lang-selector"
+              onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold bg-[#162A31] text-[#FFF8F1] border border-white/10 hover:bg-[#162A31]/90 transition-colors font-outfit cursor-pointer"
+              title="Cambiar idioma de la aplicación"
+            >
+              <span className="text-sm">{currentLanguageInfo.flag}</span>
+              <span className="hidden md:inline uppercase">{currentLanguageInfo.code}</span>
+              <ChevronDown className="w-3 h-3 text-white/70" />
+            </button>
+
+            {langDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-44 rounded-2xl bg-stone-900 border border-stone-700 shadow-2xl p-1.5 z-50 animate-fade-in text-white space-y-0.5">
+                {SUPPORTED_LANGUAGES.map(lang => (
+                  <button
+                    key={lang.code}
+                    onClick={() => {
+                      setLanguage(lang.code);
+                      setLangDropdownOpen(false);
+                      showToast(`${t('settings.languageChanged', 'Idioma cambiado a')} ${lang.name}`);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      language === lang.code
+                        ? 'bg-[#FF6B35] text-white'
+                        : 'hover:bg-white/10 text-stone-300'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="text-sm">{lang.flag}</span>
+                      <span>{lang.nativeName}</span>
+                    </span>
+                    {language === lang.code && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Role Toggle Switcher */}
           <button
             id="btn-toggle-role"
@@ -138,7 +196,7 @@ export const Header: React.FC = () => {
             title="Cambiar entre modo Turista y Anfitrión"
           >
             <UserCheck className="w-3.5 h-3.5 text-[#3FAF6C]" />
-            <span className="hidden md:inline">Rol:</span> <span>{userRole}</span>
+            <span className="hidden md:inline">{t('nav.role', 'Rol')}:</span> <span>{userRole}</span>
           </button>
 
           {/* Opciones de Desarrollador */}
@@ -171,6 +229,15 @@ export const Header: React.FC = () => {
 
         {/* Mobile menu button */}
         <div className="lg:hidden flex items-center gap-2">
+          {/* Mobile Language button */}
+          <button
+            onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+            className="p-1.5 px-2.5 rounded-full bg-[#162A31] border border-white/10 text-xs font-bold flex items-center gap-1 cursor-pointer"
+          >
+            <span>{currentLanguageInfo.flag}</span>
+            <span className="uppercase text-[11px]">{currentLanguageInfo.code}</span>
+          </button>
+
           <button
             id="btn-mobile-menu"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -180,6 +247,28 @@ export const Header: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Mobile Language Dropdown */}
+      {langDropdownOpen && (
+        <div className="lg:hidden bg-stone-900 border-b border-stone-700 px-4 py-2 flex items-center justify-around gap-1">
+          {SUPPORTED_LANGUAGES.map(lang => (
+            <button
+              key={lang.code}
+              onClick={() => {
+                setLanguage(lang.code);
+                setLangDropdownOpen(false);
+                showToast(`${t('settings.languageChanged', 'Idioma cambiado a')} ${lang.name}`);
+              }}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer ${
+                language === lang.code ? 'bg-[#FF6B35] text-white' : 'text-stone-300 hover:bg-white/10'
+              }`}
+            >
+              <span>{lang.flag}</span>
+              <span>{lang.nativeName}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Mobile Drawer Dropdown */}
       {mobileMenuOpen && (
@@ -199,9 +288,9 @@ export const Header: React.FC = () => {
                 }`}
               >
                 {item.icon}
-                <span className="truncate">{item.label}</span>
+                <span>{item.label}</span>
                 {Boolean(item.badge) && (
-                  <span className="ml-auto w-4 h-4 rounded-full bg-[#FF6B35] text-white text-[10px] font-black flex items-center justify-center">
+                  <span className="ml-auto w-4 h-4 rounded-full bg-[#FF6B35] text-white text-[10px] font-black flex items-center justify-center border border-white">
                     {item.badge}
                   </span>
                 )}
@@ -209,50 +298,59 @@ export const Header: React.FC = () => {
             ))}
           </div>
 
-          <div className="pt-2 border-t border-white/10 flex flex-wrap gap-2">
+          <div className="pt-2 border-t border-white/10 flex flex-col gap-2">
             <button
               onClick={() => {
                 const nextRole =
                   userRole === UserRole.TURISTA ? UserRole.ANFITRION : UserRole.TURISTA;
                 setUserRole(nextRole);
-                if (nextRole === UserRole.ANFITRION) setActiveScreen('host_dashboard');
-                else setActiveScreen('explore');
                 setMobileMenuOpen(false);
               }}
-              className="flex-1 py-2 px-3 bg-[#162A31] text-[#FFC83D] border border-white/10 rounded-full text-xs font-bold flex items-center justify-center gap-2 font-ibm-plex cursor-pointer"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-bold bg-[#162A31] text-[#FFC83D] border border-white/10 font-ibm-plex cursor-pointer"
             >
               <UserCheck className="w-4 h-4 text-[#3FAF6C]" />
-              Rol: {userRole}
+              <span>{t('nav.role', 'Rol')}: {userRole} (Cambiar)</span>
+            </button>
+
+            {/* Logout button in Mobile menu */}
+            <button
+              onClick={() => setShowLogoutConfirm(true)}
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-bold bg-rose-950/70 text-rose-300 border border-rose-800/40 font-outfit cursor-pointer hover:bg-rose-900/80 transition-colors"
+            >
+              <LogOut className="w-4 h-4 text-rose-400" />
+              <span>{t('nav.logout', 'Cerrar Sesión')}</span>
             </button>
           </div>
         </div>
       )}
 
-      {/* Confirmation Modal for Logout */}
+      {/* Logout Confirmation Dialog */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full text-stone-900 text-center space-y-4 shadow-2xl border border-stone-200 animate-in zoom-in-95">
-            <div className="w-14 h-14 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
-              <LogOut className="w-7 h-7" />
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full text-stone-900 shadow-2xl border border-stone-200 space-y-4 animate-scale-up">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+              <LogOut className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-bold text-[#23404A] font-outfit">¿Cerrar tu sesión?</h3>
-            <p className="text-xs text-stone-500 font-manrope">
-              Tus cambios, reservas y preferencias se mantendrán guardados de forma segura en tu cuenta para cuando vuelvas a iniciar sesión.
-            </p>
-            <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="text-center space-y-1">
+              <h3 className="text-lg font-black font-outfit text-stone-900">
+                {t('nav.logout', '¿Cerrar Sesión?')}
+              </h3>
+              <p className="text-xs text-stone-600 font-manrope">
+                Tu progreso y reservas quedan guardados de forma segura en tu dispositivo.
+              </p>
+            </div>
+            <div className="flex gap-2 pt-2">
               <button
-                type="button"
                 onClick={() => setShowLogoutConfirm(false)}
-                className="py-2.5 px-4 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-2xl text-xs font-bold font-outfit transition-colors cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl bg-stone-100 text-stone-700 text-xs font-bold hover:bg-stone-200 transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
-                type="button"
                 onClick={handleLogout}
-                className="py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl text-xs font-bold font-outfit transition-colors shadow-md shadow-rose-600/25 cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors cursor-pointer shadow-md"
               >
-                Sí, Cerrar Sesión
+                Cerrar Sesión
               </button>
             </div>
           </div>
