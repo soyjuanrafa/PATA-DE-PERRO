@@ -71,7 +71,7 @@ export const ExperienceDetailModal: React.FC = () => {
                 setSelectedExperience(null);
                 setActiveStoryExperience(exp);
               }}
-              className="bg-[#FF5722] hover:bg-[#e04a1b] text-white px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-md font-outfit cursor-pointer animate-pulse"
+              className="bg-[#FF6B35] hover:bg-[#ff5518] text-white px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-md font-outfit cursor-pointer animate-pulse"
               title={t('exp.watchStory', 'Ver Historia')}
             >
               <PlayCircle className="w-3.5 h-3.5" />

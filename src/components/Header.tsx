@@ -27,6 +27,7 @@ import {
   Globe,
   ChevronDown,
   Check,
+  Mail,
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -71,6 +72,7 @@ export const Header: React.FC = () => {
       badge: totalUnreadMessagesCount > 0 ? totalUnreadMessagesCount : undefined,
     },
     { id: 'reservations', label: t('nav.reservations', 'Mis Reservas'), icon: <Calendar className="w-4 h-4" /> },
+    { id: 'workspace', label: 'Gmail & Docs', icon: <Mail className="w-4 h-4" /> },
     { id: 'profile', label: t('nav.profile', 'Mi Perfil'), icon: <User className="w-4 h-4" /> },
     { id: 'help', label: t('nav.help', 'Ayuda'), icon: <HelpCircle className="w-4 h-4" /> },
   ];

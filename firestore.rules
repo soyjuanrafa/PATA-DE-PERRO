@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // User accounts collection
+    // Users can only read and write their own account data
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update, delete: if isOwner(userId);
+    }
+
+    // User-specific files collection
+    // Each user can ONLY create, read, update, or delete their own stored files & metadata
+    match /user_files/{fileId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // User-specific reservations
+    match /reservations/{reservationId} {
+      allow read: if isAuthenticated() && (
+        resource.data.id_turista == request.auth.uid ||
+        resource.data.id_anfitrion == request.auth.uid
+      );
+      allow create: if isAuthenticated() && request.resource.data.id_turista == request.auth.uid;
+      allow update, delete: if isAuthenticated() && (
+        resource.data.id_turista == request.auth.uid ||
+        resource.data.id_anfitrion == request.auth.uid
+      );
+    }
+
+    // Chat threads & messages
+    match /chat_threads/{threadId} {
+      allow read, write: if isAuthenticated() && (
+        resource == null ||
+        resource.data.id_turista == request.auth.uid ||
+        resource.data.id_anfitrion == request.auth.uid ||
+        request.resource.data.id_turista == request.auth.uid ||
+        request.resource.data.id_anfitrion == request.auth.uid
+      );
+
+      match /messages/{messageId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+
+    // Community stories & reviews (readable by all users, writable by author)
+    match /stories/{storyId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Experiences (readable by all, manageable by authentic host)
+    match /experiences/{expId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+  }
+}

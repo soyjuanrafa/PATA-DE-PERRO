@@ -7,6 +7,7 @@
 import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { MoodTag, Turista } from '../types';
+import { UserFilesManager } from './UserFilesManager';
 import {
   User,
   Camera,
@@ -38,6 +39,7 @@ import {
   LogOut,
   Users,
   Plus,
+  Cloud,
 } from 'lucide-react';
 
 const PRESET_AVATARS = [
@@ -93,7 +95,7 @@ export const ProfileView: React.FC = () => {
     touristUser?.moodsFavoritos || [MoodTag.AVENTURERO, MoodTag.CULTURAL, MoodTag.CREATIVO]
   );
 
-  const [activeTab, setActiveTab] = useState<'editar' | 'vista_previa'>('editar');
+  const [activeTab, setActiveTab] = useState<'editar' | 'vista_previa' | 'archivos'>('editar');
   const [isDragging, setIsDragging] = useState(false);
 
   // Handle local gallery/file upload
@@ -207,7 +209,7 @@ export const ProfileView: React.FC = () => {
           </p>
         </div>
 
-        {/* Tab switch between editing & public preview */}
+        {/* Tab switch between editing, public preview & user cloud files */}
         <div className="flex items-center bg-stone-200/70 p-1 rounded-2xl w-fit">
           <button
             onClick={() => setActiveTab('editar')}
@@ -229,10 +231,24 @@ export const ProfileView: React.FC = () => {
           >
             Vista Previa Pública
           </button>
+          <button
+            onClick={() => setActiveTab('archivos')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === 'archivos'
+                ? 'bg-white text-emerald-700 shadow-sm'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            <Cloud className="w-3.5 h-3.5 text-emerald-600" />
+            Mis Archivos en la Nube
+          </button>
         </div>
       </div>
 
-      {activeTab === 'vista_previa' ? (
+      {activeTab === 'archivos' ? (
+        /* CLOUD STORAGE & USER FILES MANAGER */
+        <UserFilesManager />
+      ) : activeTab === 'vista_previa' ? (
         /* PUBLIC PROFILE CARD PREVIEW */
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm space-y-6 animate-in fade-in">
           <div className="relative bg-gradient-to-r from-[#23404A] to-[#162A31] rounded-2xl p-6 sm:p-8 text-white overflow-hidden">

@@ -7,6 +7,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { calculateHaversineDistance } from '../utils/security';
+import { resolveImageUrl, handleImageFallback } from '../utils/imageHelper';
 import { Camera, Compass, Navigation, ArrowLeft, RefreshCw, Layers, MapPin, CheckCircle, ExternalLink } from 'lucide-react';
 
 export const ARNavigationSim: React.FC = () => {
@@ -83,7 +84,8 @@ export const ARNavigationSim: React.FC = () => {
           <div className="relative w-full h-full bg-gradient-to-b from-stone-900 via-stone-800 to-black flex items-center justify-center overflow-hidden">
             {/* Simulated AR Camera Grid Lines */}
             <img
-              src={activeExp.imagen_url}
+              src={resolveImageUrl(activeExp.imagen_url)}
+              onError={e => handleImageFallback(e, activeExp.imagen_url)}
               alt="Fondo AR"
               className="w-full h-full object-cover opacity-40 filter blur-xs"
             />

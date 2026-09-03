@@ -28,6 +28,7 @@ export enum MoodTag {
 export enum UserRole {
   TURISTA = 'Turista',
   ANFITRION = 'Anfitrión',
+  DESARROLLADOR = 'Desarrollador',
 }
 
 export interface RedesSociales {
@@ -46,6 +47,8 @@ export interface UserAccount {
   correo: string;
   password?: string;
   role: UserRole;
+  isDev?: boolean;
+  authProvider?: 'google' | 'facebook' | 'github' | 'apple' | 'email';
   avatar?: string;
   telefono?: string;
   pais?: string;
@@ -263,5 +266,17 @@ export interface TestResult {
   passed: boolean;
   message: string;
   durationMs: number;
+}
+
+export interface UserFile {
+  id: string;
+  userId: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  downloadUrl: string; // Base64 or cloud storage URL
+  uploadDate: string; // ISO string
+  category?: 'document' | 'photo' | 'ticket' | 'story' | 'other';
+  description?: string;
 }
 

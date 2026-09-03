@@ -47,9 +47,13 @@ El diseño de **Pata de Perro** sigue una estética artesanal, sobria y de alto 
 | **Animaciones** | Framer Motion / Motion |
 | **Iconografía** | Lucide React |
 | **Empaquetador** | Vite |
+| **Backend & Cloud DB** | Firebase Firestore (Base de datos NoSQL en la nube con RLS) |
+| **Autenticación** | Firebase Authentication (Registro, Inicio de Sesión y Cierre) |
+| **Almacenamiento de Archivos** | Cloud Storage / Colección de Archivos de Usuario (`user_files`) |
+| **Reglas de Seguridad** | Firestore Security Rules (Row-Level Security por `request.auth.uid`) |
 | **Internacionalización** | Sistema Custom i18n (Español, Inglés, Francés, Alemán) |
 | **Contenedores & CI/CD** | Docker, Docker Compose, GitHub Actions |
-| **Persistencia Local** | LocalStorage Engine con Exportación/Importación JSON |
+| **Persistencia Local y Respaldo** | Sincronización híbrida Local + Nube con Exportación/Importación JSON |
 
 ---
 
@@ -87,7 +91,18 @@ El diseño de **Pata de Perro** sigue una estética artesanal, sobria y de alto 
 - Publicación y edición de nuevas experiencias turísticas.
 - Bandeja de reservas recibidas con métricas de ocupación e ingresos generados.
 
-### 7. Sistema de Habilidades (Antigravity Skills)
+### 7. Backend en la Nube (Firebase Auth + Cloud Firestore + File Storage)
+- **Autenticación Completa de Usuarios**: Registro con credenciales seguras, inicio de sesión, persistencia de sesión con Firebase Auth y cierre de sesión seguro.
+- **Base de Datos NoSQL en Tiempo Real**: Persistencia en la nube de perfiles de usuario (`users`), reservas generadas (`reservations`), hilos de conversación y metadatos de archivos subidos.
+- **Almacenamiento y Gestor de Archivos de Usuario (`UserFilesManager`)**: Módulo interactivo en la pestaña del Perfil que permite a los usuarios:
+  - Cargar archivos y fotos con validación estricta de tamaño (máx. 800 KB por documento) y formato (JPEG, PNG, WEBP, PDF).
+  - Previsualizar en vivo imágenes y documentos con fecha, tamaño formateado y tipo MIME.
+  - Eliminar sus propios archivos con confirmación y control de integridad.
+- **Reglas de Seguridad Estrictas (Firestore Security Rules)**:
+  - Cada usuario autenticado únicamente puede crear, consultar, modificar o eliminar sus propios documentos (`request.auth.uid == userId` y `request.auth.uid == resource.data.userId`).
+  - Validación de campos requeridos y tipos de datos a nivel de base de datos para impedir inyecciones o mutaciones no autorizadas.
+
+### 8. Sistema de Habilidades (Antigravity Skills)
 - Integración del framework de habilidades en `.agents/skills/`.
 - Habilidad maestra `creador-de-habilidades` con plantillas (`plantilla-skill.md`), scripts y ejemplos estructurados para extender las capacidades del asistente de desarrollo.
 
@@ -204,6 +219,9 @@ En el menú superior de la aplicación puedes utilizar **"Exportar Respaldo"** p
 
 #### 3. ¿El mapa interactivo genera costos de Google Maps API?
 No. El mapa de Ciudades Creativas utiliza renderizado de vectores SVG de alta definición y proyección matemática WGS84, lo que elimina costos de API y garantiza tiempos de respuesta instantáneos.
+
+#### 4. ¿Cómo garantiza el Backend que cada usuario solo acceda a sus propios datos y archivos?
+La plataforma implementa **Firestore Security Rules** con autenticación de Firebase (`request.auth != null`). Las reglas de seguridad impiden lecturas o escrituras cruzadas verificando `request.auth.uid == userId` tanto en `/users/{userId}` como en `/user_files/{fileId}` y `/reservations/{reservationId}`, asegurando que ningún usuario pueda consultar o manipular archivos y datos ajenos.
 
 ---
 

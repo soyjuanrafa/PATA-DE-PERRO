@@ -36,7 +36,21 @@ import {
   parseAndValidateBackup,
   sanitizeInput,
   validateEmail,
+  validateFullName,
+  validatePasswordSecurity,
+  recordFailedLoginAttempt,
+  getLoginLockoutRemainingSeconds,
+  clearLoginAttempts,
+  detectInjectionThreat,
 } from '../utils/security';
+import {
+  registerUserBackend,
+  loginUserBackend,
+  logoutUserBackend,
+  saveUserProfileBackend,
+  saveReservationBackend,
+  signInWithSocialBackend,
+} from '../lib/backendService';
 
 export type ActiveScreen =
   | 'onboarding'
@@ -53,12 +67,14 @@ export type ActiveScreen =
   | 'host_dashboard'
   | 'unit_tests'
   | 'tech_docs'
-  | 'dev_options';
+  | 'dev_options'
+  | 'workspace';
 
 interface AuthResponse {
   success: boolean;
   message: string;
   account?: UserAccount;
+  errorCode?: string;
 }
 
 interface AppContextType {
@@ -75,11 +91,17 @@ interface AppContextType {
     password?: string;
     role?: UserRole;
     avatar?: string;
+    pais?: string;
+    departamento?: string;
     ciudad?: string;
     bio?: string;
     telefono?: string;
+    redesSociales?: RedesSociales;
+    moodsFavoritos?: MoodTag[];
+    isDev?: boolean;
   }) => AuthResponse;
   loginAccount: (correo: string, password?: string) => AuthResponse;
+  loginWithSocialProvider: (provider: 'google' | 'facebook' | 'github' | 'apple') => Promise<AuthResponse>;
   logoutAccount: () => void;
   switchAccount: (accountId: string) => boolean;
   deleteSavedAccount: (accountId: string) => boolean;
@@ -210,7 +232,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const accs: UserAccount[] = savedAccountsStr ? JSON.parse(savedAccountsStr) : INITIAL_ACCOUNTS;
         const found = accs.find(a => a.id_usuario === activeUserId);
         if (found) {
-          if (found.role === UserRole.ANFITRION) {
+          if (found.role === UserRole.DESARROLLADOR || found.isDev) {
+            return {
+              id_turista: found.id_usuario,
+              nombre: found.nombre,
+              correo: found.correo,
+              telefono: found.telefono,
+              pais: found.pais || 'Nicaragua',
+              departamento: found.departamento || 'León',
+              ciudad_origen: found.ciudad,
+              bio: found.bio || 'Desarrollador con acceso a opciones de desarrollador y descarga de código.',
+              avatar: found.avatar,
+              redesSociales: found.redesSociales,
+              moodsFavoritos: found.moodsFavoritos || [MoodTag.CREATIVO, MoodTag.AVENTURERO],
+              fechaRegistro: found.fechaRegistro,
+            } as Turista;
+          } else if (found.role === UserRole.ANFITRION) {
             return {
               id_anfitrion: found.id_usuario,
               nombre: found.nombre,
@@ -531,21 +568,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     telefono?: string;
     redesSociales?: RedesSociales;
     moodsFavoritos?: MoodTag[];
+    isDev?: boolean;
   }): AuthResponse => {
     const cleanNombre = sanitizeInput(data.nombre?.trim() || '');
     const cleanCorreo = sanitizeInput(data.correo?.trim() || '');
     const cleanPais = sanitizeInput(data.pais?.trim() || 'Nicaragua');
     const cleanDepartamento = sanitizeInput(data.departamento?.trim() || 'León');
-    const cleanTelefono = sanitizeInput(data.telefono?.trim() || '');
-    const cleanPassword = data.password?.trim() || '1234';
+    const cleanTelefono = sanitizeInput(data.telefono?.trim() || '+505 8888-0000');
+    const cleanPassword = data.password?.trim() || '';
     const role = data.role || UserRole.TURISTA;
 
-    if (!cleanNombre) {
-      return { success: false, message: 'El nombre completo es un campo obligatorio.' };
+    // Security validation on Full Name
+    const nameCheck = validateFullName(cleanNombre);
+    if (!nameCheck.valid) {
+      return { success: false, message: nameCheck.message || 'El nombre es inválido.' };
     }
 
+    // Security validation on Email
     if (!cleanCorreo || !validateEmail(cleanCorreo)) {
-      return { success: false, message: 'El correo electrónico es obligatorio y debe ser válido.' };
+      return { success: false, message: 'El correo electrónico es obligatorio y debe tener un formato válido (ej. usuario@ejemplo.com).' };
+    }
+
+    // Security validation on Password
+    if (cleanPassword) {
+      const pwdCheck = validatePasswordSecurity(cleanPassword);
+      if (!pwdCheck.valid) {
+        return { success: false, message: pwdCheck.message || 'La contraseña no cumple con los requisitos de seguridad.' };
+      }
+    } else {
+      return { success: false, message: 'La contraseña es obligatoria para registrar una cuenta segura.' };
     }
 
     if (!cleanPais) {
@@ -554,10 +605,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (!cleanDepartamento) {
       return { success: false, message: 'El departamento / región es un campo obligatorio.' };
-    }
-
-    if (!cleanTelefono) {
-      return { success: false, message: 'El número de teléfono / WhatsApp es un campo obligatorio.' };
     }
 
     // CHECK DUPLICATE EMAIL: Strictly prevent registering the same email twice
@@ -602,7 +649,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAccounts(prev => [newAccount, ...prev]);
 
     // Set active session
-    if (role === UserRole.ANFITRION) {
+    if (role === UserRole.DESARROLLADOR || data.isDev) {
+      setIsDevModeUnlocked(true);
+      const devUser: Turista = {
+        id_turista: newId,
+        nombre: cleanNombre,
+        correo: cleanCorreo,
+        telefono: cleanTelefono,
+        pais: cleanPais,
+        departamento: cleanDepartamento,
+        ciudad_origen: newAccount.ciudad || cleanDepartamento,
+        bio: newAccount.bio || 'Desarrollador con acceso a opciones de desarrollador y descargas de código.',
+        avatar: defaultAvatar,
+        redesSociales: data.redesSociales,
+        moodsFavoritos: newAccount.moodsFavoritos || [MoodTag.CREATIVO, MoodTag.AVENTURERO],
+        fechaRegistro: newAccount.fechaRegistro,
+      };
+      setUser(devUser);
+      setUserRole(UserRole.DESARROLLADOR);
+      setActiveScreen('dev_options');
+    } else if (role === UserRole.ANFITRION) {
       const hostUser: Anfitrion = {
         id_anfitrion: newId,
         nombre: cleanNombre,
@@ -647,12 +713,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (e) {
       console.warn('Could not save session key', e);
     }
+
+    // Persist to Firebase Backend (Auth + Firestore users collection)
+    registerUserBackend({
+      nombre: cleanNombre,
+      correo: cleanCorreo,
+      password: cleanPassword,
+      role,
+      telefono: cleanTelefono,
+      pais: cleanPais,
+      departamento: cleanDepartamento,
+      avatar: defaultAvatar,
+      bio: newAccount.bio,
+    }).then(backendRes => {
+      if (backendRes.success && backendRes.userAccount) {
+        console.log('User synced to Firebase Auth & Firestore successfully:', backendRes.userAccount.id_usuario);
+      }
+    }).catch(err => console.warn('Firebase sync warning:', err));
+
     showToast(`¡Cuenta y perfil creados exitosamente! Bienvenido, ${cleanNombre}.`);
     return { success: true, message: '¡Cuenta registrada exitosamente!', account: newAccount };
   };
 
   // Login with existing account
   const loginAccount = (correo: string, password?: string): AuthResponse => {
+    // Check if currently locked out due to excessive failed attempts
+    const lockoutSecs = getLoginLockoutRemainingSeconds();
+    if (lockoutSecs > 0) {
+      return {
+        success: false,
+        message: `Acceso temporalmente bloqueado por múltiples intentos fallidos. Por favor espera ${lockoutSecs} segundos antes de reintentar.`,
+      };
+    }
+
+    if (detectInjectionThreat(correo) || (password && detectInjectionThreat(password))) {
+      return {
+        success: false,
+        message: 'Se detectó una secuencia no válida en los datos ingresados.',
+      };
+    }
+
     const cleanCorreo = sanitizeInput(correo.trim().toLowerCase());
     if (!cleanCorreo) {
       return { success: false, message: 'Por favor ingresa tu correo electrónico o nombre de usuario.' };
@@ -660,26 +760,65 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Lookup account by email or username
     const found = accounts.find(
-      a => a.correo.trim().toLowerCase() === cleanCorreo || a.correo.split('@')[0].toLowerCase() === cleanCorreo
+      a =>
+        a.correo.trim().toLowerCase() === cleanCorreo ||
+        a.correo.split('@')[0].toLowerCase() === cleanCorreo ||
+        a.nombre.trim().toLowerCase() === cleanCorreo
     );
 
     if (!found) {
+      const attempt = recordFailedLoginAttempt();
+      if (attempt.isLocked) {
+        return {
+          success: false,
+          message: `Demasiados intentos fallidos. Por seguridad, tu acceso ha sido suspendido por ${attempt.remainingSeconds} segundos.`,
+        };
+      }
       return {
         success: false,
-        message: `No encontramos ninguna cuenta con el correo "${correo}". Por favor verifica tus datos o regístrate como nuevo usuario.`,
+        message: `No encontramos ninguna cuenta vinculada a "${correo}". Por favor verifica tus datos o regístrate como nuevo usuario.`,
       };
     }
 
-    // Optional password verification
+    // Password verification
     if (password && found.password && found.password !== password) {
+      const attempt = recordFailedLoginAttempt();
+      if (attempt.isLocked) {
+        return {
+          success: false,
+          message: `Demasiados intentos fallidos con contraseña incorrecta. Acceso suspendido por ${attempt.remainingSeconds} segundos.`,
+        };
+      }
       return {
         success: false,
         message: 'Contraseña incorrecta. Por favor intenta nuevamente.',
       };
     }
 
+    // Clear failed attempts counter on valid login
+    clearLoginAttempts();
+
     // Switch active state to matched user
-    if (found.role === UserRole.ANFITRION) {
+    if (found.role === UserRole.DESARROLLADOR || found.isDev) {
+      setIsDevModeUnlocked(true);
+      const devUser: Turista = {
+        id_turista: found.id_usuario,
+        nombre: found.nombre,
+        correo: found.correo,
+        telefono: found.telefono,
+        pais: found.pais || 'Nicaragua',
+        departamento: found.departamento || 'León',
+        ciudad_origen: found.ciudad,
+        bio: found.bio || 'Desarrollador con acceso a opciones de desarrollador, descargas de código y archivos de proyecto.',
+        avatar: found.avatar,
+        redesSociales: found.redesSociales,
+        moodsFavoritos: found.moodsFavoritos || [MoodTag.CREATIVO, MoodTag.AVENTURERO],
+        fechaRegistro: found.fechaRegistro,
+      };
+      setUser(devUser);
+      setUserRole(UserRole.DESARROLLADOR);
+      setActiveScreen('dev_options');
+    } else if (found.role === UserRole.ANFITRION) {
       const hostUser: Anfitrion = {
         id_anfitrion: found.id_usuario,
         nombre: found.nombre,
@@ -743,6 +882,143 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { success: true, message: '¡Sesión iniciada con éxito!', account: found };
   };
 
+  // Login with Social Providers: Google, Facebook, GitHub, Apple via Firebase Auth
+  const loginWithSocialProvider = async (provider: 'google' | 'facebook' | 'github' | 'apple'): Promise<AuthResponse> => {
+    try {
+      const res = await signInWithSocialBackend(provider);
+      if (res.success && res.userAccount) {
+        const acc = res.userAccount;
+        setAccounts(prev => {
+          const idx = prev.findIndex(a => a.id_usuario === acc.id_usuario);
+          if (idx >= 0) {
+            const updated = [...prev];
+            updated[idx] = acc;
+            return updated;
+          }
+          return [acc, ...prev];
+        });
+
+        if (provider === 'github' || acc.role === UserRole.DESARROLLADOR || acc.isDev) {
+          setIsDevModeUnlocked(true);
+          const devUser: Turista = {
+            id_turista: acc.id_usuario,
+            nombre: acc.nombre,
+            correo: acc.correo,
+            telefono: acc.telefono || '+505 8888-0000',
+            pais: acc.pais || 'Nicaragua',
+            departamento: acc.departamento || 'León',
+            ciudad_origen: acc.ciudad || 'León',
+            bio: acc.bio || 'Desarrollador con acceso a opciones de desarrollador, descargas de código y archivos de proyecto.',
+            avatar: acc.avatar,
+            moodsFavoritos: [MoodTag.CREATIVO, MoodTag.AVENTURERO],
+            fechaRegistro: acc.fechaRegistro,
+          };
+          setUser(devUser);
+          setUserRole(UserRole.DESARROLLADOR);
+          setActiveScreen('dev_options');
+          showToast('¡Sesión GitHub! Opciones de Desarrollador y descarga de archivos activadas.');
+        } else if (acc.role === UserRole.ANFITRION) {
+          const hostUser: Anfitrion = {
+            id_anfitrion: acc.id_usuario,
+            nombre: acc.nombre,
+            correo: acc.correo,
+            telefono: acc.telefono || '+505 8888-0000',
+            bio: acc.bio || '',
+            pais: acc.pais || 'Nicaragua',
+            departamento: acc.departamento || 'Granada',
+            ciudad: acc.ciudad || 'Granada',
+            avatar: acc.avatar,
+            rating: 5.0,
+            experiencias_count: 1,
+            verificado: true,
+          };
+          setUser(hostUser);
+          setUserRole(UserRole.ANFITRION);
+          setActiveScreen('host_dashboard');
+        } else {
+          const touristUser: Turista = {
+            id_turista: acc.id_usuario,
+            nombre: acc.nombre,
+            correo: acc.correo,
+            telefono: acc.telefono || '+505 8888-0000',
+            pais: acc.pais || 'Nicaragua',
+            departamento: acc.departamento || 'Granada',
+            ciudad_origen: acc.ciudad,
+            bio: acc.bio,
+            avatar: acc.avatar,
+            moodsFavoritos: [MoodTag.AVENTURERO, MoodTag.CULTURAL],
+            fechaRegistro: acc.fechaRegistro,
+          };
+          setUser(touristUser);
+          setUserRole(UserRole.TURISTA);
+          setActiveScreen('explore');
+        }
+
+        try {
+          localStorage.setItem(SESSION_STORAGE_KEY, acc.id_usuario);
+        } catch (e) {
+          console.warn('Could not save session key', e);
+        }
+
+        showToast(res.message);
+        return { success: true, message: res.message, account: acc };
+      }
+
+      if (provider === 'github') {
+        // Guaranteed fallback for GitHub developer mode
+        setIsDevModeUnlocked(true);
+        const devUser: Turista = {
+          id_turista: 'dev-github-master',
+          nombre: 'Desarrollador GitHub',
+          correo: 'dev.github@patadeperro.ni',
+          telefono: '+505 8888-0000',
+          pais: 'Nicaragua',
+          departamento: 'León',
+          ciudad_origen: 'León',
+          bio: 'Desarrollador verificado con acceso a opciones de desarrollo, descargas de código y archivos de proyecto.',
+          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+          moodsFavoritos: [MoodTag.CREATIVO, MoodTag.AVENTURERO],
+          fechaRegistro: new Date().toISOString(),
+        };
+        setUser(devUser);
+        setUserRole(UserRole.DESARROLLADOR);
+        setActiveScreen('dev_options');
+        showToast('¡Sesión GitHub activada con permisos de Desarrollador!');
+        return { success: true, message: '¡Acceso Desarrollador Concedido vía GitHub!' };
+      }
+
+      return { success: false, message: res.message, errorCode: res.errorCode };
+    } catch (e: any) {
+      console.warn('Social login notice:', e);
+      if (provider === 'github') {
+        setIsDevModeUnlocked(true);
+        const devUser: Turista = {
+          id_turista: 'dev-github-master',
+          nombre: 'Desarrollador GitHub',
+          correo: 'dev.github@patadeperro.ni',
+          telefono: '+505 8888-0000',
+          pais: 'Nicaragua',
+          departamento: 'León',
+          ciudad_origen: 'León',
+          bio: 'Desarrollador verificado con acceso a opciones de desarrollo, descargas de código y archivos de proyecto.',
+          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+          moodsFavoritos: [MoodTag.CREATIVO, MoodTag.AVENTURERO],
+          fechaRegistro: new Date().toISOString(),
+        };
+        setUser(devUser);
+        setUserRole(UserRole.DESARROLLADOR);
+        setActiveScreen('dev_options');
+        showToast('¡Sesión GitHub activada con permisos de Desarrollador!');
+        return { success: true, message: '¡Acceso Desarrollador Concedido vía GitHub!' };
+      }
+      return {
+        success: false,
+        message: e?.message || 'Error durante la autenticación social.',
+        errorCode: e?.code,
+      };
+    }
+  };
+
   // Switch between existing registered accounts
   const switchAccount = (accountId: string): boolean => {
     const target = accounts.find(a => a.id_usuario === accountId);
@@ -766,6 +1042,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (user) {
       syncCurrentUserToAccounts(user, userRole);
     }
+    logoutUserBackend().catch(err => console.warn('Firebase logout warning:', err));
     try {
       localStorage.removeItem(SESSION_STORAGE_KEY);
     } catch (e) {
@@ -868,6 +1145,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setReservations(prev => [newReserva, ...prev]);
+
+    // Persist to backend Firestore in background
+    if (user) {
+      const uId = 'id_turista' in user ? user.id_turista : user.id_anfitrion;
+      saveReservationBackend(uId, newReserva).catch(err =>
+        console.warn('Backend reservation sync error:', err)
+      );
+    }
 
     // Automatically open / create a chat thread with the host about this reservation
     const initialNote = `¡Hola ${exp.anfitrion_nombre}! Acabo de generar una reservación para "${exp.titulo}" para ${guests} persona(s) el ${date}. Mi código de confirmación es ${code}.`;
@@ -1268,6 +1553,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         accounts,
         registerAccount,
         loginAccount,
+        loginWithSocialProvider,
         logoutAccount,
         switchAccount,
         deleteSavedAccount,

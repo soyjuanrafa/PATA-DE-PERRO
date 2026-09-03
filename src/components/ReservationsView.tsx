@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { Calendar, MessageSquare, MapPin, CheckCircle, Clock, ShieldCheck, X, Compass, Phone, ArrowLeft } from 'lucide-react';
+import { Calendar, MessageSquare, MapPin, CheckCircle, Clock, ShieldCheck, X, Compass, Phone, ArrowLeft, Mail } from 'lucide-react';
 import { EstadoReserva } from '../types';
 import { resolveImageUrl, handleImageFallback } from '../utils/imageHelper';
 
@@ -161,6 +161,16 @@ export const ReservationsView: React.FC = () => {
                       <Phone className="w-3.5 h-3.5" />
                       WhatsApp
                     </a>
+
+                    {/* Google Workspace */}
+                    <button
+                      onClick={() => setActiveScreen('workspace')}
+                      className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full text-xs font-bold font-outfit flex items-center gap-1.5 transition-colors cursor-pointer"
+                      title="Enviar comprobante por Gmail o exportar a Google Docs"
+                    >
+                      <Mail className="w-3.5 h-3.5 text-[#2E9D62]" />
+                      Gmail & Docs
+                    </button>
 
                     {res.estado_reserva === EstadoReserva.CONFIRMADA && (
                       <button

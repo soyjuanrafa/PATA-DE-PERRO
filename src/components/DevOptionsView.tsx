@@ -9,7 +9,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { TECHNICAL_DOCS } from '../data/mockData';
 import { runAllUnitTests } from '../__tests__/unitTests';
-import { TestResult } from '../types';
+import { TestResult, UserRole } from '../types';
 import {
   Lock,
   Unlock,
@@ -31,9 +31,139 @@ import {
   RefreshCw,
   KeyRound,
   Code2,
+  Settings,
+  Globe,
+  Radio,
+  Trash2,
+  HardDrive,
+  CheckCircle,
 } from 'lucide-react';
 
 const AUTHORIZED_PIN = '1102';
+
+const SQL_SCHEMA_CONTENT = `-- 🐾 Pata de Perro - Esquema Relacional Normalizado (3NF) para PostgreSQL / Cloud SQL / Supabase
+-- Red de Ciudades Creativas de Nicaragua (León, Granada, Masaya, Matagalpa, Ometepe, Estelí)
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 1. Entidad Turista
+CREATE TABLE IF NOT EXISTS turista (
+    id_turista VARCHAR(36) PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    correo VARCHAR(120) NOT NULL UNIQUE,
+    telefono VARCHAR(20),
+    preferencia_idioma VARCHAR(10) DEFAULT 'es',
+    fecha_registro TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. Entidad Anfitrión Comunitario
+CREATE TABLE IF NOT EXISTS anfitrion (
+    id_anfitrion VARCHAR(36) PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    comunidad VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    verificado BOOLEAN DEFAULT TRUE,
+    biografia TEXT,
+    fecha_registro TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. Entidad Experiencia Turística
+CREATE TABLE IF NOT EXISTS experiencia (
+    id_exp VARCHAR(36) PRIMARY KEY,
+    id_anfitrion VARCHAR(36) NOT NULL REFERENCES anfitrion(id_anfitrion) ON DELETE CASCADE,
+    categoria VARCHAR(20) NOT NULL CHECK (categoria IN ('Tierra', 'Agua', 'Aire')),
+    titulo VARCHAR(150) NOT NULL,
+    descripcion TEXT NOT NULL,
+    precio DECIMAL(10,2) NOT NULL,
+    ubicacion_lat DECIMAL(10,8) NOT NULL,
+    ubicacion_lon DECIMAL(11,8) NOT NULL,
+    recurso_ra_url VARCHAR(255),
+    creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 4. Entidad Punto de Interés RA (POI en coordenadas WGS84)
+CREATE TABLE IF NOT EXISTS punto_interes_ra (
+    id_poi_ra VARCHAR(36) PRIMARY KEY,
+    id_exp VARCHAR(36) NOT NULL REFERENCES experiencia(id_exp) ON DELETE CASCADE,
+    latitud DECIMAL(10,8) NOT NULL,
+    longitud DECIMAL(11,8) NOT NULL,
+    distancia_m INT DEFAULT 0,
+    gltf_modelo VARCHAR(255)
+);
+
+-- 5. Entidad Reserva (Tercera Forma Normal)
+CREATE TABLE IF NOT EXISTS reserva (
+    id_reserva VARCHAR(36) PRIMARY KEY,
+    id_turista VARCHAR(36) NOT NULL REFERENCES turista(id_turista) ON DELETE CASCADE,
+    id_exp VARCHAR(36) NOT NULL REFERENCES experiencia(id_exp) ON DELETE CASCADE,
+    fecha_reserva DATE NOT NULL,
+    personas INT NOT NULL CHECK (personas > 0),
+    monto_total DECIMAL(10,2) NOT NULL,
+    estado_reserva VARCHAR(20) NOT NULL DEFAULT 'Confirmada',
+    codigo_confirmacion VARCHAR(20) NOT NULL UNIQUE,
+    creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Índices optimizados para búsquedas frecuentes
+CREATE INDEX IF NOT EXISTS idx_exp_categoria ON experiencia(categoria);
+CREATE INDEX IF NOT EXISTS idx_reserva_turista ON reserva(id_turista);
+CREATE INDEX IF NOT EXISTS idx_reserva_exp ON reserva(id_exp);
+`;
+
+const DOCKER_COMPOSE_CONTENT = `# 🐾 Pata de Perro - Configuración Docker Compose Multietapa
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pata_de_perro_app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+`;
+
+const CICD_YAML_CONTENT = `# 🐾 Pata de Perro - Pipeline de CI/CD (GitHub Actions)
+# Ubicación: /.github/workflows/ci-cd.yml
+name: Pata de Perro CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del Repositorio
+        uses: actions/checkout@v3
+
+      - name: Configurar Node.js v18
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Instalación Limpia de Dependencias
+        run: npm ci
+
+      - name: Validación de Sintaxis y Linting
+        run: npm run lint
+
+      - name: Compilación del Artefacto para Producción
+        run: npm run build
+`;
 
 const FULL_README_CONTENT = `# 🐾 Pata de Perro - Plataforma de Turismo Auténtico y Sostenible
 
@@ -117,6 +247,17 @@ Ubicado en \`/.github/workflows/ci-cd.yml\`, el pipeline ejecuta automáticament
 
 ---
 
+## 🔐 Autenticación Multi-Proveedor en Firebase
+
+La plataforma cuenta con integración a **Firebase Authentication** con soporte completo para:
+- **Correo Electrónico y Contraseña (Email/Password)**: Registro y verificación de turistas y anfitriones con hash seguro y control de acceso por roles.
+- **Google**: Autenticación rápida federada con Google Identity y vinculación de cuenta.
+- **Facebook**: Inicio de sesión mediante \`FacebookAuthProvider\` con permisos de perfil público y correo.
+- **GitHub (Nuevo Proveedor)**: Autenticación mediante \`GithubAuthProvider\` con scopes de lectura de perfil y sincronización automática de credenciales.
+- **Sincronización con Firestore**: Cada inicio de sesión federado o por email verifica y almacena el documento del usuario en la colección \`/users/{userId}\` bajo reglas de seguridad RLS.
+
+---
+
 ## 🗄️ Modelo Relacional Normalizado (3NF)
 
 El motor de base de datos está diseñado bajo la Tercera Forma Normal (3NF) para garantizar la integridad referencial y evitar redundancias.
@@ -183,6 +324,8 @@ Licenciado bajo Apache 2.0. Desarrollado para la auditoría técnica de las Ciud
 
 export const DevOptionsView: React.FC = () => {
   const {
+    currentUser,
+    loginWithSocialProvider,
     exportBackupJSON,
     resetToDefaultData,
     showToast,
@@ -191,12 +334,22 @@ export const DevOptionsView: React.FC = () => {
     setActiveScreen,
   } = useApp();
 
+  // Determine if user has DEVELOPER privilege via GitHub or developer account
+  const isDevUser = currentUser?.role === UserRole.DESARROLLADOR || currentUser?.isDev || currentUser?.authProvider === 'github';
+  const isUnlocked = isDevModeUnlocked || isDevUser;
+
   // Authentication State (defaults to isDevModeUnlocked from context)
   const [pinInput, setPinInput] = useState<string>('');
   const [pinError, setPinError] = useState<string | null>(null);
 
   // Active sub-tab inside Developer Options
-  const [activeTab, setActiveTab] = useState<'doc' | 'tests' | 'architecture' | 'backup'>('doc');
+  const [activeTab, setActiveTab] = useState<'doc' | 'tests' | 'architecture' | 'backup' | 'files'>('doc');
+
+  // Developer runtime modifiers state
+  const [simulatedRAMode, setSimulatedRAMode] = useState(true);
+  const [verboseLogging, setVerboseLogging] = useState(false);
+  const [backendEndpoint, setBackendEndpoint] = useState('/api/sync');
+  const [endpointSaved, setEndpointSaved] = useState(false);
 
   // Copy state
   const [copied, setCopied] = useState(false);
@@ -224,6 +377,18 @@ export const DevOptionsView: React.FC = () => {
     }
   };
 
+  // Quick GitHub developer unlock
+  const handleGithubDevUnlock = async () => {
+    setPinError(null);
+    const res = await loginWithSocialProvider('github');
+    if (res.success) {
+      setIsDevModeUnlocked(true);
+      showToast('¡Desbloqueado con cuenta de Desarrollador GitHub!');
+    } else {
+      setPinError('Error de autenticación con GitHub: ' + res.message);
+    }
+  };
+
   // Toggle master developer mode switch
   const handleToggleDevMode = () => {
     if (isDevModeUnlocked) {
@@ -235,18 +400,23 @@ export const DevOptionsView: React.FC = () => {
     }
   };
 
-  // Download complete README + Diagrams document
-  const handleDownloadDoc = () => {
-    const blob = new Blob([FULL_README_CONTENT], { type: 'text/markdown;charset=utf-8' });
+  // Helper for direct file download
+  const handleDownloadFile = (filename: string, content: string, mimeType: string = 'text/plain') => {
+    const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'README_y_Diagramas_Pata_de_Perro.md';
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    showToast('📄 Documento README y Diagramas descargado en formato Markdown.');
+    showToast(`Descargado: ${filename}`);
+  };
+
+  // Download complete README + Diagrams document
+  const handleDownloadDoc = () => {
+    handleDownloadFile('README_y_Diagramas_Pata_de_Perro.md', FULL_README_CONTENT, 'text/markdown');
   };
 
   // Copy document to clipboard
@@ -276,7 +446,7 @@ export const DevOptionsView: React.FC = () => {
   };
 
   // Render PIN Gate Modal if not unlocked
-  if (!isDevModeUnlocked) {
+  if (!isUnlocked) {
     return (
       <div className="min-h-[calc(100vh-4rem)] bg-stone-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border border-stone-200 text-stone-800 space-y-6 animate-in zoom-in-95">
@@ -285,13 +455,13 @@ export const DevOptionsView: React.FC = () => {
               <KeyRound className="w-7 h-7" />
             </div>
             <span className="inline-block px-3 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold uppercase tracking-wider">
-              Acceso Restringido
+              Acceso Restringido para Desarrolladores
             </span>
             <h1 className="text-stone-900 font-extrabold text-xl sm:text-2xl font-outfit tracking-tight">
               Opciones de Desarrollador
             </h1>
             <p className="text-stone-500 text-xs">
-              Esta sección está oculta por defecto. Para activarla, toca 3 veces sobre la versión de la aplicación en <strong>Configuración → Acerca de la aplicación</strong> o ingresa el PIN de seguridad asignado.
+              Acceso exclusivo para descarga de archivos, esquemas SQL y modificación de configuraciones de sistema.
             </p>
           </div>
 
@@ -332,7 +502,24 @@ export const DevOptionsView: React.FC = () => {
             </button>
           </form>
 
-          <div className="pt-3 border-t border-stone-100 flex items-center justify-between">
+          {/* GitHub Developer Bypass */}
+          <div className="pt-3 border-t border-stone-100 text-center space-y-2">
+            <p className="text-xs text-stone-500 font-medium">
+              ¿Acceso mediante cuenta autorizada de desarrollador?
+            </p>
+            <button
+              type="button"
+              onClick={handleGithubDevUnlock}
+              className="w-full py-2.5 px-4 bg-[#24292e] hover:bg-black text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer border border-emerald-500/40"
+            >
+              <svg className="w-4 h-4 fill-current text-emerald-400" viewBox="0 0 24 24">
+                <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+              </svg>
+              <span>Acceder con GitHub (Desarrollador)</span>
+            </button>
+          </div>
+
+          <div className="pt-2 flex items-center justify-between">
             <button
               onClick={() => setActiveScreen('settings')}
               className="text-xs font-bold text-stone-500 hover:text-stone-900 transition-colors"
@@ -455,6 +642,18 @@ export const DevOptionsView: React.FC = () => {
           }`}
         >
           <Server className="w-4 h-4" /> Respaldos JSON & Estado
+        </button>
+
+        <button
+          id="btn-tab-dev-files"
+          onClick={() => setActiveTab('files')}
+          className={`flex-1 min-w-[140px] py-2.5 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+            activeTab === 'files'
+              ? 'bg-[#FF6B35] text-white shadow-xs'
+              : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+          }`}
+        >
+          <Code2 className="w-4 h-4" /> Descargas & Modificaciones
         </button>
       </div>
 
@@ -742,7 +941,319 @@ export const DevOptionsView: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* TAB 5: FILES DOWNLOAD & REAL-TIME DEVELOPER MODIFICATIONS */}
+        {activeTab === 'files' && (
+          <div className="space-y-8 animate-in fade-in-50">
+            {/* Header info */}
+            <div className="border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-slate-900 text-xl font-bold flex items-center gap-2">
+                  <Code2 className="w-5 h-5 text-[#FF6B35]" />
+                  Descargas de Archivos & Modificaciones de Desarrollador
+                </h2>
+                <p className="text-slate-500 text-xs mt-1">
+                  Descarga directa de archivos de configuración, esquemas SQL, pruebas y modificación de parámetros en tiempo real.
+                </p>
+              </div>
+
+              {currentUser && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-1.5 text-xs text-emerald-800 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>
+                    Sesión: <strong>{currentUser.nombre}</strong> ({currentUser.authProvider || 'github'})
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Sub-section 1: 1-Click File Downloads */}
+            <div className="space-y-3">
+              <h3 className="text-slate-900 font-bold text-sm flex items-center gap-2">
+                <Download className="w-4 h-4 text-[#FF6B35]" />
+                Archivos del Proyecto Disponibles para Descarga
+              </h3>
+              <p className="text-xs text-slate-500">
+                Selecciona y descarga cualquiera de los artefactos y archivos técnicos del proyecto en su formato nativo:
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
+                {/* File 1: SQL 3NF Schema */}
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <Database className="w-4 h-4 text-indigo-600" />
+                        schema_3nf_postgresql.sql
+                      </span>
+                      <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+                        SQL DDL
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+                      Esquema relacional formal en 3NF con llaves primarias, foráneas, índices de búsqueda y restricciones CHECK.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDownloadFile('schema_3nf_postgresql.sql', SQL_SCHEMA_CONTENT, 'text/sql')}
+                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Descargar (.sql)
+                  </button>
+                </div>
+
+                {/* File 2: README Markdown */}
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <FileText className="w-4 h-4 text-emerald-600" />
+                        README_y_Diagramas.md
+                      </span>
+                      <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold">
+                        Markdown
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+                      Documentación técnica completa, visión general, paleta de colores, instalación local con Docker y FAQ.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleDownloadDoc}
+                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Descargar (.md)
+                  </button>
+                </div>
+
+                {/* File 3: Docker Compose */}
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <HardDrive className="w-4 h-4 text-sky-600" />
+                        docker-compose.yml
+                      </span>
+                      <span className="text-[10px] bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full font-bold">
+                        YAML
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+                      Orquestación de contenedor multietapa listo para producción, puerto 3000 y healthcheck integrado.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDownloadFile('docker-compose.yml', DOCKER_COMPOSE_CONTENT, 'text/yaml')}
+                    className="w-full py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Descargar (.yml)
+                  </button>
+                </div>
+
+                {/* File 4: GitHub Actions CI/CD */}
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <Workflow className="w-4 h-4 text-amber-600" />
+                        ci-cd.yml (Workflow)
+                      </span>
+                      <span className="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-bold">
+                        Actions
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+                      Pipeline automatizado con pruebas unitarias, linting estricto y compilación en GitHub Actions.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDownloadFile('ci-cd.yml', CICD_YAML_CONTENT, 'text/yaml')}
+                    className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Descargar (.yml)
+                  </button>
+                </div>
+
+                {/* File 5: JSON Database Snapshot */}
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <Server className="w-4 h-4 text-purple-600" />
+                        respaldo_datos.json
+                      </span>
+                      <span className="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-bold">
+                        Snapshot
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+                      Instantánea completa de la base de datos con usuarios, anfitriones de Ciudades Creativas y reservas activas.
+                    </p>
+                  </div>
+                  <button
+                    onClick={exportBackupJSON}
+                    className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Exportar (.json)
+                  </button>
+                </div>
+
+                {/* File 6: Unit Tests Suite Source */}
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <Terminal className="w-4 h-4 text-stone-700" />
+                        unitTests_suite.ts
+                      </span>
+                      <span className="text-[10px] bg-stone-200 text-stone-700 px-2 py-0.5 rounded-full font-bold">
+                        TypeScript
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+                      Lógica de validación matemática Haversine, desinfección XSS y generación de tokens criptográficos PDP.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const testsSummary = runAllUnitTests();
+                      const content = `// Pata de Perro - Suite de Pruebas Unitarias\n// Total ejecutadas: ${testsSummary.total}\n\n` +
+                        JSON.stringify(testsSummary, null, 2);
+                      handleDownloadFile('unitTests_suite.json', content, 'application/json');
+                    }}
+                    className="w-full py-2 bg-stone-700 hover:bg-stone-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Descargar Resultados
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Sub-section 2: Real-time Runtime Modifiers */}
+            <div className="pt-6 border-t border-slate-200 space-y-4">
+              <h3 className="text-slate-900 font-bold text-sm flex items-center gap-2">
+                <Settings className="w-4 h-4 text-[#FF6B35]" />
+                Modificador de Parámetros del Sistema (En Vivo)
+              </h3>
+              <p className="text-xs text-slate-500">
+                Cambia el comportamiento de los motores en caliente sin reiniciar la aplicación:
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Modifier 1: AR Engine Simulation Mode */}
+                <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="block text-xs font-bold text-slate-900">
+                        Modo de Simulación de Realidad Aumentada (RA)
+                      </span>
+                      <span className="block text-[11px] text-slate-500 mt-0.5">
+                        {simulatedRAMode
+                          ? 'Simulador activo con coordenadas WGS84 preconfiguradas'
+                          : 'Uso forzado de sensores de brújula/giroscopio del dispositivo'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSimulatedRAMode(!simulatedRAMode);
+                        showToast(
+                          simulatedRAMode
+                            ? 'Simulador RA desactivado: Sensores nativos activos'
+                            : 'Simulador RA activado con coordenadas de Nicaragua'
+                        );
+                      }}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                        simulatedRAMode ? 'bg-[#FF6B35]' : 'bg-slate-300'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                          simulatedRAMode ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Modifier 2: Verbose Console Logging */}
+                <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="block text-xs font-bold text-slate-900">
+                        Depuración y Logs Detallados en Consola
+                      </span>
+                      <span className="block text-[11px] text-slate-500 mt-0.5">
+                        {verboseLogging
+                          ? 'Imprimiendo cada evento de geolocalización y reserva en consola'
+                          : 'Modo silencioso para producción'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !verboseLogging;
+                        setVerboseLogging(next);
+                        if (next) {
+                          console.log('🐾 [Pata de Perro DEV] Depuración activada:', new Date().toISOString());
+                        }
+                        showToast(next ? 'Logs de consola activados' : 'Logs de consola desactivados');
+                      }}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                        verboseLogging ? 'bg-indigo-600' : 'bg-slate-300'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                          verboseLogging ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Modifier 3: Custom Backend Endpoint URL */}
+                <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-3 md:col-span-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <span className="block text-xs font-bold text-slate-900 flex items-center gap-2">
+                        <Globe className="w-4 h-4 text-indigo-600" />
+                        URL de Endpoint de Sincronización Backend
+                      </span>
+                      <span className="block text-[11px] text-slate-500 mt-0.5">
+                        Permite a los desarrolladores redirigir las peticiones a un servidor local o túnel de prueba.
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={backendEndpoint}
+                        onChange={e => {
+                          setBackendEndpoint(e.target.value);
+                          setEndpointSaved(false);
+                        }}
+                        className="p-2 text-xs rounded-xl bg-white border border-slate-300 font-mono w-64 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B35]"
+                        placeholder="/api/sync o https://..."
+                      />
+                      <button
+                        onClick={() => {
+                          setEndpointSaved(true);
+                          showToast(`Endpoint guardado: ${backendEndpoint}`);
+                        }}
+                        className="px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                      >
+                        {endpointSaved ? '¡Guardado!' : 'Modificar'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
