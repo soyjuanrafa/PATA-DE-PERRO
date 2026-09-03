@@ -4,7 +4,7 @@ import path from 'path';
 import * as dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import { requireAuth, AuthRequest } from './src/middleware/auth.ts';
-import { getUsers, getOrCreateUser } from './src/db/users.ts';
+import { getUsers, getOrCreateUser, clearAllUsers } from './src/db/users.ts';
 import { getExperiencias, getReservas, getAnfitriones, getPuntosInteresRa, createReservaSync } from './src/db/turismo.ts';
 
 dotenv.config();
@@ -67,6 +67,17 @@ async function startServer() {
     } catch (error: any) {
       console.error('Failed to fetch users from Cloud SQL:', error);
       res.status(500).json({ error: error.message || 'Failed to fetch users' });
+    }
+  });
+
+  // Endpoint to clear all users from the database
+  app.delete('/api/users', async (req, res) => {
+    try {
+      const result = await clearAllUsers();
+      res.json(result);
+    } catch (error: any) {
+      console.error('Failed to clear users from Cloud SQL:', error);
+      res.status(500).json({ error: error.message || 'Failed to clear users' });
     }
   });
 

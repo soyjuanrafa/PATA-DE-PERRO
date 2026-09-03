@@ -230,6 +230,12 @@ export const MapView: React.FC = () => {
 
         {/* Google Map Stage */}
         <div className="w-full h-[450px] sm:h-[540px] rounded-2xl overflow-hidden relative border border-stone-200 bg-stone-100">
+          {!GOOGLE_MAPS_API_KEY && (
+            <div className="absolute top-3 left-3 z-10 bg-amber-600/90 text-white text-[11px] font-semibold px-3 py-1.5 rounded-xl shadow-md backdrop-blur-xs flex items-center gap-1.5 pointer-events-none">
+              <Info className="w-3.5 h-3.5 shrink-0" />
+              <span>Modo demo: configura <code>VITE_GOOGLE_MAPS_API_KEY</code> en tu .env</span>
+            </div>
+          )}
           <APIProvider
             apiKey={GOOGLE_MAPS_API_KEY}
             libraries={['marker']}

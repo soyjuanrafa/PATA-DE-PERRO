@@ -13,7 +13,17 @@ import { Camera, Compass, Navigation, ArrowLeft, RefreshCw, Layers, MapPin, Chec
 export const ARNavigationSim: React.FC = () => {
   const { selectedExperience, experiences, setActiveScreen, setSelectedExperience } = useApp();
 
-  const activeExp = selectedExperience || experiences[0];
+  const activeExp = selectedExperience || experiences[0] || {
+    id_exp: 'default',
+    titulo: 'Centro Histórico y Cultural',
+    descripcion: 'Exploración de la ciudad creativa',
+    imagen_url: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=800&q=80',
+    ubicacion_lat: 12.4379,
+    ubicacion_lon: -86.878,
+    ubicacion_nombre: 'León, Nicaragua',
+    precio: 0,
+    duracion: '1 hora',
+  };
 
   const [heading, setHeading] = useState(45);
   const [distance, setDistance] = useState(320); // meters

@@ -306,7 +306,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [experiences, setExperiences] = useState<Experiencia[]>(INITIAL_EXPERIENCES);
   const [reservations, setReservations] = useState<Reserva[]>(INITIAL_RESERVATIONS);
   const [chatThreads, setChatThreads] = useState<ChatThread[]>(INITIAL_CHAT_THREADS as ChatThread[]);
-  const [activeThreadId, setActiveThreadId] = useState<string | null>('thread_01');
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<CategoriaExp | 'Todas'>('Todas');
   const [selectedMood, setSelectedMood] = useState<MoodTag | 'Todos'>('Todos');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -1530,15 +1530,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const resetToDefaultData = () => {
     setExperiences(INITIAL_EXPERIENCES);
-    setReservations(INITIAL_RESERVATIONS);
-    setChatThreads(INITIAL_CHAT_THREADS as ChatThread[]);
-    setSavedExperienceIds(['exp_tierra_01', 'exp_tierra_04']);
-    setUser(INITIAL_USER);
+    setReservations([]);
+    setChatThreads([]);
+    setSavedExperienceIds([]);
+    setAccounts([]);
+    setUser(null);
     setUserRole(UserRole.TURISTA);
     setIsDevModeUnlocked(false);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
+    localStorage.removeItem(ACCOUNTS_STORAGE_KEY);
+    localStorage.removeItem(SESSION_STORAGE_KEY);
     localStorage.removeItem(DEV_MODE_STORAGE_KEY);
-    showToast('Estado restablecido a los valores predeterminados del sistema.');
+    showToast('Estado restablecido. Base de datos y cuentas limpiadas.');
   };
 
   return (
