@@ -17,12 +17,17 @@ export type LogoVariant =
   | 'blackAndWhite'
   | 'impresiones'
   | 'horizontal'
-  | 'icon';
+  | 'icon'
+  | 'lgpdp1'
+  | 'lgpdp2'
+  | 'lgpdp3';
 
 interface LogoProps {
   variant?: LogoVariant;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
+  imgClassName?: string;
+  imgStyle?: React.CSSProperties;
   showText?: boolean;
 }
 
@@ -30,6 +35,8 @@ export const Logo: React.FC<LogoProps> = ({
   variant = 'color',
   size = 'md',
   className = '',
+  imgClassName = '',
+  imgStyle,
   showText = false,
 }) => {
   const [imageError, setImageError] = useState(false);
@@ -37,7 +44,7 @@ export const Logo: React.FC<LogoProps> = ({
   // Height configurations
   const heightMap = {
     sm: 'h-8 sm:h-9',
-    md: 'h-10 sm:h-11',
+    md: 'h-10 sm:h-12',
     lg: 'h-12 sm:h-14',
     xl: 'h-16 sm:h-20',
   };
@@ -59,6 +66,12 @@ export const Logo: React.FC<LogoProps> = ({
         return BRAND_LOGOS.blackAndWhite;
       case 'impresiones':
         return BRAND_LOGOS.impresiones;
+      case 'lgpdp1':
+        return BRAND_LOGOS.lgpdp1;
+      case 'lgpdp2':
+        return BRAND_LOGOS.lgpdp2;
+      case 'lgpdp3':
+        return BRAND_LOGOS.lgpdp3;
       case 'color':
       case 'horizontal':
       default:
@@ -75,7 +88,8 @@ export const Logo: React.FC<LogoProps> = ({
         <img
           src={logoUrl}
           alt="Pata de Perro - Turismo Auténtico y Sostenible"
-          className={`${heightMap[size]} w-auto object-contain rounded-md transition-transform duration-200`}
+          style={imgStyle}
+          className={`${heightMap[size]} w-auto object-contain rounded-md transition-transform duration-200 ${imgClassName}`}
           onError={() => setImageError(true)}
           loading="eager"
         />

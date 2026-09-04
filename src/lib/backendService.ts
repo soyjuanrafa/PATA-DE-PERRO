@@ -33,7 +33,6 @@ import {
 } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from './firebase';
 import { UserAccount, UserFile, Reserva } from '../types';
-import { WORKSPACE_SCOPES, setWorkspaceAccessToken, clearWorkspaceAuth } from './googleWorkspace';
 
 export interface BackendAuthResult {
   success: boolean;
@@ -195,9 +194,6 @@ export async function loginUserBackend(
  */
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
-WORKSPACE_SCOPES.forEach(scope => {
-  googleProvider.addScope(scope);
-});
 
 export const facebookProvider = new FacebookAuthProvider();
 facebookProvider.addScope('email');
@@ -237,14 +233,6 @@ export async function signInWithSocialBackend(
   try {
     const userCredential = await signInWithPopup(auth, provider);
     const fbUser = userCredential.user;
-
-    // Cache access token for Google Workspace APIs if Google sign in
-    if (providerType === 'google') {
-      const credential = GoogleAuthProvider.credentialFromResult(userCredential);
-      if (credential?.accessToken) {
-        setWorkspaceAccessToken(credential.accessToken, fbUser);
-      }
-    }
 
     const userDocRef = doc(db, 'users', fbUser.uid);
     const userDocSnap = await getDoc(userDocRef);
@@ -404,7 +392,6 @@ export async function signInWithSocialBackend(
  * Logout current Firebase user session
  */
 export async function logoutUserBackend(): Promise<void> {
-  clearWorkspaceAuth();
   if (isFirebaseConfigured) {
     try {
       await signOut(auth);
@@ -437,6 +424,8 @@ export async function saveUserProfileBackend(userId: string, data: Partial<UserA
 /**
  * Upload a user file and store its metadata & binary content safely in the database
  */
+const getUserFilesStorageKey = (userId: string) => `patadeperro_user_files_${userId}`;
+
 export async function uploadUserFileBackend(
   userId: string,
   file: File,
@@ -469,11 +458,27 @@ export async function uploadUserFileBackend(
       description,
     };
 
+    // 1. Persist to Firestore if configured
     if (isFirebaseConfigured) {
-      await setDoc(doc(db, 'user_files', fileId), {
-        ...newFileDoc,
-        createdAt: serverTimestamp(),
-      });
+      try {
+        await setDoc(doc(db, 'user_files', fileId), {
+          ...newFileDoc,
+          createdAt: serverTimestamp(),
+        });
+      } catch (firestoreErr) {
+        console.warn('Could not write user file to Firestore, will retain in local storage:', firestoreErr);
+      }
+    }
+
+    // 2. Persist to LocalStorage cache for resilient offline & instant reload survival
+    try {
+      const key = getUserFilesStorageKey(userId);
+      const existingRaw = localStorage.getItem(key);
+      const existingList: UserFile[] = existingRaw ? JSON.parse(existingRaw) : [];
+      const updatedList = [newFileDoc, ...existingList.filter(f => f.id !== fileId)];
+      localStorage.setItem(key, JSON.stringify(updatedList));
+    } catch (storageErr) {
+      console.warn('Could not save user file to local storage cache:', storageErr);
     }
 
     return {
@@ -492,23 +497,54 @@ export async function uploadUserFileBackend(
  */
 export async function getUserFilesBackend(userId: string): Promise<UserFile[]> {
   if (!userId) return [];
-  if (!isFirebaseConfigured) return [];
 
+  // 1. Fetch from LocalStorage cache first
+  let cachedFiles: UserFile[] = [];
   try {
-    const q = query(
-      collection(db, 'user_files'),
-      where('userId', '==', userId)
-    );
-    const snap = await getDocs(q);
-    const files: UserFile[] = [];
-    snap.forEach(docSnap => {
-      files.push(docSnap.data() as UserFile);
-    });
-    return files.sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime());
-  } catch (error) {
-    console.error('Error fetching user files from Firestore:', error);
-    return [];
+    const raw = localStorage.getItem(getUserFilesStorageKey(userId));
+    if (raw) {
+      cachedFiles = JSON.parse(raw);
+    }
+  } catch (e) {
+    console.warn('Error reading cached user files:', e);
   }
+
+  // 2. If Firebase is configured, fetch from Firestore and merge
+  if (isFirebaseConfigured) {
+    try {
+      const q = query(
+        collection(db, 'user_files'),
+        where('userId', '==', userId)
+      );
+      const snap = await getDocs(q);
+      const remoteFiles: UserFile[] = [];
+      snap.forEach(docSnap => {
+        remoteFiles.push(docSnap.data() as UserFile);
+      });
+
+      if (remoteFiles.length > 0) {
+        // Merge remote and cached without duplicates
+        const fileMap = new Map<string, UserFile>();
+        remoteFiles.forEach(f => fileMap.set(f.id, f));
+        cachedFiles.forEach(f => {
+          if (!fileMap.has(f.id)) fileMap.set(f.id, f);
+        });
+        const merged = Array.from(fileMap.values()).sort(
+          (a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
+        );
+        try {
+          localStorage.setItem(getUserFilesStorageKey(userId), JSON.stringify(merged));
+        } catch (_) {}
+        return merged;
+      }
+    } catch (error) {
+      console.warn('Error fetching user files from Firestore, using local cache:', error);
+    }
+  }
+
+  return cachedFiles.sort(
+    (a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
+  );
 }
 
 /**
@@ -516,20 +552,34 @@ export async function getUserFilesBackend(userId: string): Promise<UserFile[]> {
  */
 export async function deleteUserFileBackend(userId: string, fileId: string): Promise<boolean> {
   if (!userId || !fileId) return false;
-  if (!isFirebaseConfigured) return false;
 
+  // 1. Remove from LocalStorage cache
   try {
-    const fileRef = doc(db, 'user_files', fileId);
-    const snap = await getDoc(fileRef);
-    if (snap.exists() && snap.data().userId === userId) {
-      await deleteDoc(fileRef);
-      return true;
+    const key = getUserFilesStorageKey(userId);
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const existing: UserFile[] = JSON.parse(raw);
+      const filtered = existing.filter(f => f.id !== fileId);
+      localStorage.setItem(key, JSON.stringify(filtered));
     }
-    return false;
-  } catch (error) {
-    console.error('Error deleting user file from Firestore:', error);
-    return false;
+  } catch (e) {
+    console.warn('Error updating local files on delete:', e);
   }
+
+  // 2. Remove from Firestore if configured
+  if (isFirebaseConfigured) {
+    try {
+      const fileRef = doc(db, 'user_files', fileId);
+      const snap = await getDoc(fileRef);
+      if (snap.exists() && snap.data().userId === userId) {
+        await deleteDoc(fileRef);
+      }
+    } catch (error) {
+      console.error('Error deleting user file from Firestore:', error);
+    }
+  }
+
+  return true;
 }
 
 /**

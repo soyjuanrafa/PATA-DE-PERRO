@@ -21,7 +21,6 @@ import { MessagesView } from './components/MessagesView';
 import { HelpManualView } from './components/HelpManualView';
 import { DevOptionsView } from './components/DevOptionsView';
 import { SettingsView } from './components/SettingsView';
-import { GoogleWorkspaceView } from './components/GoogleWorkspaceView';
 import { ExperienceDetailModal } from './components/ExperienceDetailModal';
 import { BookingModal } from './components/BookingModal';
 import { ExperienceStoriesModal } from './components/ExperienceStoriesModal';
@@ -73,8 +72,6 @@ const MainAppContent: React.FC = () => {
         return <SettingsView />;
       case 'host_dashboard':
         return <HostDashboard />;
-      case 'workspace':
-        return <GoogleWorkspaceView />;
       case 'dev_options':
       case 'unit_tests':
       case 'tech_docs':

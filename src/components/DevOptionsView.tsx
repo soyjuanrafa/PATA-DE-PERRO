@@ -10,6 +10,8 @@ import { useApp } from '../context/AppContext';
 import { TECHNICAL_DOCS } from '../data/mockData';
 import { runAllUnitTests } from '../__tests__/unitTests';
 import { TestResult, UserRole } from '../types';
+import { UserFilesManager } from './UserFilesManager';
+import { GoogleMapsDevLab } from './GoogleMapsDevLab';
 import {
   Lock,
   Unlock,
@@ -37,6 +39,7 @@ import {
   Trash2,
   HardDrive,
   CheckCircle,
+  Cloud,
 } from 'lucide-react';
 
 const AUTHORIZED_PIN = '1102';
@@ -343,7 +346,7 @@ export const DevOptionsView: React.FC = () => {
   const [pinError, setPinError] = useState<string | null>(null);
 
   // Active sub-tab inside Developer Options
-  const [activeTab, setActiveTab] = useState<'doc' | 'tests' | 'architecture' | 'backup' | 'files'>('doc');
+  const [activeTab, setActiveTab] = useState<'doc' | 'tests' | 'architecture' | 'backup' | 'files' | 'maps'>('doc');
 
   // Developer runtime modifiers state
   const [simulatedRAMode, setSimulatedRAMode] = useState(true);
@@ -647,13 +650,25 @@ export const DevOptionsView: React.FC = () => {
         <button
           id="btn-tab-dev-files"
           onClick={() => setActiveTab('files')}
-          className={`flex-1 min-w-[140px] py-2.5 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+          className={`flex-1 min-w-[140px] py-2.5 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
             activeTab === 'files'
               ? 'bg-[#FF6B35] text-white shadow-xs'
               : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50'
           }`}
         >
           <Code2 className="w-4 h-4" /> Descargas & Modificaciones
+        </button>
+
+        <button
+          id="btn-tab-dev-maps"
+          onClick={() => setActiveTab('maps')}
+          className={`flex-1 min-w-[140px] py-2.5 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            activeTab === 'maps'
+              ? 'bg-orange-500 text-white shadow-xs'
+              : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+          }`}
+        >
+          <Globe className="w-4 h-4" /> Google Maps (Laboratorio)
         </button>
       </div>
 
@@ -1249,9 +1264,29 @@ export const DevOptionsView: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Sub-section: Cloud Storage & User Files Manager */}
+              <div className="space-y-4 pt-6 border-t border-slate-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-slate-900 font-bold text-sm flex items-center gap-2">
+                      <Cloud className="w-4 h-4 text-emerald-600" />
+                      Gestor Técnico de Archivos en la Nube (Firestore / Cifrado Local)
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Panel administrativo de desarrollador para auditar, subir, respaldar y gestionar archivos multimedia y documentos de las cuentas.
+                    </p>
+                  </div>
+                </div>
+
+                <UserFilesManager />
+              </div>
             </div>
           </div>
         )}
+
+        {/* TAB 6: GOOGLE MAPS PLATFORM LABORATORY */}
+        {activeTab === 'maps' && <GoogleMapsDevLab />}
       </div>
     </div>
   );

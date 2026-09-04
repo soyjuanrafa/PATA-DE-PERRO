@@ -27,7 +27,6 @@ import {
   Globe,
   ChevronDown,
   Check,
-  Mail,
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -72,7 +71,6 @@ export const Header: React.FC = () => {
       badge: totalUnreadMessagesCount > 0 ? totalUnreadMessagesCount : undefined,
     },
     { id: 'reservations', label: t('nav.reservations', 'Mis Reservas'), icon: <Calendar className="w-4 h-4" /> },
-    { id: 'workspace', label: 'Gmail & Docs', icon: <Mail className="w-4 h-4" /> },
     { id: 'profile', label: t('nav.profile', 'Mi Perfil'), icon: <User className="w-4 h-4" /> },
     { id: 'help', label: t('nav.help', 'Ayuda'), icon: <HelpCircle className="w-4 h-4" /> },
   ];
@@ -109,7 +107,12 @@ export const Header: React.FC = () => {
           className="hover:opacity-90 transition-opacity focus:outline-hidden flex items-center gap-2 cursor-pointer shrink-0"
           title="Ir al Inicio"
         >
-          <Logo variant="white" size="sm" />
+          <Logo
+            variant="lgpdp1"
+            size="md"
+            imgStyle={{ width: '105px', height: '115px' }}
+            imgClassName="w-[105px] h-[115px]"
+          />
         </button>
 
         {/* Navigation items for Desktop */}

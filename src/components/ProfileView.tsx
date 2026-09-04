@@ -4,10 +4,9 @@
  * Pata de Perro - User / Tourist Profile & Social Media Management Screen
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { MoodTag, Turista } from '../types';
-import { UserFilesManager } from './UserFilesManager';
 import {
   User,
   Camera,
@@ -39,7 +38,6 @@ import {
   LogOut,
   Users,
   Plus,
-  Cloud,
 } from 'lucide-react';
 
 const PRESET_AVATARS = [
@@ -95,8 +93,35 @@ export const ProfileView: React.FC = () => {
     touristUser?.moodsFavoritos || [MoodTag.AVENTURERO, MoodTag.CULTURAL, MoodTag.CREATIVO]
   );
 
-  const [activeTab, setActiveTab] = useState<'editar' | 'vista_previa' | 'archivos'>('editar');
+  const [activeTab, setActiveTab] = useState<'editar' | 'vista_previa'>('editar');
   const [isDragging, setIsDragging] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
+
+  // Keep form in sync when active user or session changes
+  useEffect(() => {
+    if (touristUser) {
+      if (touristUser.nombre) setNombre(touristUser.nombre);
+      if (touristUser.correo) setCorreo(touristUser.correo);
+      if (touristUser.telefono !== undefined) setTelefono(touristUser.telefono);
+      if (touristUser.pais) setPais(touristUser.pais);
+      if (touristUser.departamento) setDepartamento(touristUser.departamento);
+      if (touristUser.ciudad_origen) setCiudadOrigen(touristUser.ciudad_origen);
+      if (touristUser.bio !== undefined) setBio(touristUser.bio);
+      if (touristUser.avatar) setAvatar(touristUser.avatar);
+      if (touristUser.redesSociales) {
+        setInstagram(touristUser.redesSociales.instagram || '');
+        setFacebook(touristUser.redesSociales.facebook || '');
+        setTiktok(touristUser.redesSociales.tiktok || '');
+        setTwitter(touristUser.redesSociales.twitter || '');
+        setYoutube(touristUser.redesSociales.youtube || '');
+        setLinkedin(touristUser.redesSociales.linkedin || '');
+        setWeb(touristUser.redesSociales.web || '');
+      }
+      if (touristUser.moodsFavoritos) {
+        setSelectedMoods(touristUser.moodsFavoritos);
+      }
+    }
+  }, [touristUser]);
 
   // Handle local gallery/file upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -170,6 +195,10 @@ export const ProfileView: React.FC = () => {
       },
       moodsFavoritos: selectedMoods,
     });
+
+    setJustSaved(true);
+    setActiveTab('vista_previa');
+    setTimeout(() => setJustSaved(false), 6000);
   };
 
   return (
@@ -231,24 +260,35 @@ export const ProfileView: React.FC = () => {
           >
             Vista Previa Pública
           </button>
-          <button
-            onClick={() => setActiveTab('archivos')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab === 'archivos'
-                ? 'bg-white text-emerald-700 shadow-sm'
-                : 'text-stone-600 hover:text-stone-900'
-            }`}
-          >
-            <Cloud className="w-3.5 h-3.5 text-emerald-600" />
-            Mis Archivos en la Nube
-          </button>
         </div>
       </div>
 
-      {activeTab === 'archivos' ? (
-        /* CLOUD STORAGE & USER FILES MANAGER */
-        <UserFilesManager />
-      ) : activeTab === 'vista_previa' ? (
+      {justSaved && (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-700 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold font-outfit text-emerald-950">
+                ¡Todos tus datos han sido guardados permanentemente!
+              </h4>
+              <p className="text-[11px] text-emerald-700">
+                Tu foto de perfil, biografía, redes sociales vinculadas y datos de contacto están protegidos y persistidos en tu cuenta.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setJustSaved(false)}
+            className="text-emerald-700 hover:text-emerald-900 text-xs font-bold cursor-pointer p-1"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {activeTab === 'vista_previa' ? (
         /* PUBLIC PROFILE CARD PREVIEW */
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm space-y-6 animate-in fade-in">
           <div className="relative bg-gradient-to-r from-[#23404A] to-[#162A31] rounded-2xl p-6 sm:p-8 text-white overflow-hidden">

@@ -67,8 +67,7 @@ export type ActiveScreen =
   | 'host_dashboard'
   | 'unit_tests'
   | 'tech_docs'
-  | 'dev_options'
-  | 'workspace';
+  | 'dev_options';
 
 interface AuthResponse {
   success: boolean;
@@ -1172,6 +1171,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateUserProfile = (updated: Partial<Turista>) => {
     const newName = updated.nombre ? sanitizeInput(updated.nombre) : (user?.nombre || 'Sofía Guevara');
     const newAvatar = updated.avatar !== undefined ? updated.avatar : user?.avatar;
+    const newBio = updated.bio !== undefined ? sanitizeInput(updated.bio) : user?.bio;
+    const activeUserId = (user as Turista)?.id_turista || (user as any)?.id_usuario;
+    const userEmail = updated.correo?.trim().toLowerCase() || user?.correo?.trim().toLowerCase();
 
     setUser(prev => {
       if (!prev) return prev;
@@ -1180,7 +1182,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ...updated,
         nombre: newName,
         avatar: newAvatar,
-        bio: updated.bio ? sanitizeInput(updated.bio) : (prev as Turista).bio,
+        bio: newBio,
       } as Turista;
     });
 
@@ -1197,12 +1199,81 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       )
     );
 
-    showToast('¡Perfil de usuario actualizado exitosamente en toda la app!');
+    // Update registered accounts collection and persist synchronously to localStorage
+    setAccounts(prevAccounts => {
+      const idx = prevAccounts.findIndex(
+        a => (activeUserId && a.id_usuario === activeUserId) || (userEmail && a.correo.trim().toLowerCase() === userEmail)
+      );
+
+      const mergedData: Partial<UserAccount> = {
+        nombre: newName,
+        correo: updated.correo?.trim() || user?.correo || '',
+        avatar: newAvatar,
+        telefono: updated.telefono !== undefined ? updated.telefono : user?.telefono,
+        pais: updated.pais !== undefined ? updated.pais : user?.pais,
+        departamento: updated.departamento !== undefined ? updated.departamento : user?.departamento,
+        ciudad: updated.ciudad_origen !== undefined ? updated.ciudad_origen : (user as Turista)?.ciudad_origen,
+        bio: newBio,
+        redesSociales: updated.redesSociales !== undefined ? updated.redesSociales : user?.redesSociales,
+        moodsFavoritos: updated.moodsFavoritos !== undefined ? updated.moodsFavoritos : (user as Turista)?.moodsFavoritos,
+        ultimoAcceso: new Date().toISOString(),
+      };
+
+      let nextAccounts: UserAccount[];
+      if (idx >= 0) {
+        nextAccounts = [...prevAccounts];
+        nextAccounts[idx] = {
+          ...nextAccounts[idx],
+          ...mergedData,
+        };
+      } else {
+        const fallbackAcc: UserAccount = {
+          id_usuario: activeUserId || `usr_${Date.now()}`,
+          password: '••••••••',
+          role: UserRole.TURISTA,
+          fechaRegistro: new Date().toISOString().split('T')[0],
+          ...mergedData,
+        } as UserAccount;
+        nextAccounts = [fallbackAcc, ...prevAccounts];
+      }
+
+      try {
+        localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(nextAccounts));
+        if (activeUserId) {
+          localStorage.setItem(SESSION_STORAGE_KEY, activeUserId);
+        }
+      } catch (err) {
+        console.warn('Could not persist accounts to localStorage', err);
+      }
+
+      return nextAccounts;
+    });
+
+    // Cloud / Firestore Backend sync
+    if (activeUserId) {
+      saveUserProfileBackend(activeUserId, {
+        nombre: newName,
+        correo: updated.correo?.trim() || user?.correo || '',
+        avatar: newAvatar,
+        telefono: updated.telefono !== undefined ? updated.telefono : user?.telefono,
+        pais: updated.pais !== undefined ? updated.pais : user?.pais,
+        departamento: updated.departamento !== undefined ? updated.departamento : user?.departamento,
+        bio: newBio,
+        redesSociales: updated.redesSociales !== undefined ? updated.redesSociales : user?.redesSociales,
+      }).catch(err => {
+        console.warn('Notice syncing profile with backend:', err);
+      });
+    }
+
+    showToast('¡Perfil de usuario, fotos y vinculaciones guardados permanentemente!');
   };
 
   const updateHostProfile = (updated: Partial<Anfitrion>) => {
     const newName = updated.nombre ? sanitizeInput(updated.nombre) : (user?.nombre || 'Anfitrión');
     const newAvatar = updated.avatar !== undefined ? updated.avatar : user?.avatar;
+    const newBio = updated.bio !== undefined ? sanitizeInput(updated.bio) : user?.bio;
+    const activeUserId = (user as Anfitrion)?.id_anfitrion || (user as any)?.id_usuario;
+    const userEmail = updated.correo?.trim().toLowerCase() || user?.correo?.trim().toLowerCase();
 
     setUser(prev => {
       if (!prev) return prev;
@@ -1211,7 +1282,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ...updated,
         nombre: newName,
         avatar: newAvatar,
-        bio: updated.bio ? sanitizeInput(updated.bio) : (prev as Anfitrion).bio,
+        bio: newBio,
       } as Anfitrion;
     });
 
@@ -1228,7 +1299,69 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       )
     );
 
-    showToast('¡Perfil de anfitrión actualizado exitosamente en toda la app!');
+    // Update registered accounts collection and persist synchronously to localStorage
+    setAccounts(prevAccounts => {
+      const idx = prevAccounts.findIndex(
+        a => (activeUserId && a.id_usuario === activeUserId) || (userEmail && a.correo.trim().toLowerCase() === userEmail)
+      );
+
+      const mergedData: Partial<UserAccount> = {
+        nombre: newName,
+        correo: updated.correo?.trim() || user?.correo || '',
+        avatar: newAvatar,
+        telefono: updated.telefono !== undefined ? updated.telefono : user?.telefono,
+        ciudad: updated.ciudad !== undefined ? updated.ciudad : (user as Anfitrion)?.ciudad,
+        bio: newBio,
+        redesSociales: updated.redesSociales !== undefined ? updated.redesSociales : user?.redesSociales,
+        ultimoAcceso: new Date().toISOString(),
+      };
+
+      let nextAccounts: UserAccount[];
+      if (idx >= 0) {
+        nextAccounts = [...prevAccounts];
+        nextAccounts[idx] = {
+          ...nextAccounts[idx],
+          ...mergedData,
+        };
+      } else {
+        const fallbackAcc: UserAccount = {
+          id_usuario: activeUserId || `host_${Date.now()}`,
+          password: '••••••••',
+          role: UserRole.ANFITRION,
+          fechaRegistro: new Date().toISOString().split('T')[0],
+          ...mergedData,
+        } as UserAccount;
+        nextAccounts = [fallbackAcc, ...prevAccounts];
+      }
+
+      try {
+        localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(nextAccounts));
+        if (activeUserId) {
+          localStorage.setItem(SESSION_STORAGE_KEY, activeUserId);
+        }
+      } catch (err) {
+        console.warn('Could not persist host accounts to localStorage', err);
+      }
+
+      return nextAccounts;
+    });
+
+    // Cloud / Firestore Backend sync
+    if (activeUserId) {
+      saveUserProfileBackend(activeUserId, {
+        nombre: newName,
+        correo: updated.correo?.trim() || user?.correo || '',
+        avatar: newAvatar,
+        telefono: updated.telefono !== undefined ? updated.telefono : user?.telefono,
+        ciudad: updated.ciudad !== undefined ? updated.ciudad : (user as Anfitrion)?.ciudad,
+        bio: newBio,
+        redesSociales: updated.redesSociales !== undefined ? updated.redesSociales : user?.redesSociales,
+      }).catch(err => {
+        console.warn('Notice syncing host profile with backend:', err);
+      });
+    }
+
+    showToast('¡Perfil de anfitrión, fotos y vinculaciones guardados permanentemente!');
   };
 
   const addExperience = (newExpData: Omit<Experiencia, 'id_exp' | 'rating' | 'resenas_count'>) => {

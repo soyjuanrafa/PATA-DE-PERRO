@@ -42,7 +42,6 @@ import {
   Clock,
   Sparkles,
 } from 'lucide-react';
-import { Logo } from './Logo';
 import {
   getShuffledPantallasInicio,
   PANTALLAS_INICIO_URLS,
@@ -447,12 +446,8 @@ export const WelcomeAuthModal: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/50" />
             </div>
 
-            {/* Top Bar: Brand Logo & Start Screen Shuffle */}
-            <div className="relative z-10 flex items-center justify-between pt-2">
-              <div className="flex items-center gap-2">
-                <Logo variant="white" size="sm" />
-              </div>
-
+            {/* Top Bar: Start Screen Shuffle */}
+            <div className="relative z-10 flex items-center justify-end pt-2">
               {/* Shuffle button to explore the other start screens if desired */}
               <div className="flex items-center gap-1.5">
                 <button

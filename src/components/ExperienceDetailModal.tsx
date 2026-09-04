@@ -8,6 +8,7 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../i18n';
 import { Experiencia } from '../types';
+import { CIUDADES_CREATIVAS } from '../data/mockData';
 import { resolveImageUrl, handleImageFallback } from '../utils/imageHelper';
 import {
   X,
@@ -207,6 +208,44 @@ export const ExperienceDetailModal: React.FC = () => {
               ))}
             </ul>
           </div>
+
+          {/* Plano de Ubicación Cartográfico si pertenece a una Ciudad Creativa */}
+          {(() => {
+            const cityData = CIUDADES_CREATIVAS.find(
+              c => c.nombre.toLowerCase() === exp.ciudad_creativa.toLowerCase()
+            );
+            if (!cityData) return null;
+            return (
+              <div className="space-y-2.5 pt-2 border-t border-[#E8E5E0]">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[#23404A] font-extrabold text-base font-outfit">
+                    Plano de Ubicación ({cityData.nombre})
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedExperience(null);
+                      setActiveScreen('map');
+                    }}
+                    className="text-xs text-[#FF6B35] font-bold flex items-center gap-1 hover:underline cursor-pointer"
+                  >
+                    <MapPin className="w-3.5 h-3.5" /> Ver en Mapa General
+                  </button>
+                </div>
+                <div className="relative h-40 rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 group shadow-xs">
+                  <img
+                    src={cityData.mapa_imagen || cityData.imagen}
+                    alt={`Plano de ${cityData.nombre}`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-2.5 left-2.5 bg-stone-900/85 backdrop-blur-xs text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-xs flex items-center gap-1.5">
+                    <span>🗺️</span>
+                    <span>Plano Cartográfico Oficial • {cityData.nombre}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Footer Actions */}

@@ -419,7 +419,7 @@ export const ExploreView: React.FC = () => {
           <Compass className="w-4 h-4 text-[#FF6B35]" /> {t('explore.todayAdventure', 'Tu aventura de hoy')}
         </h2>
 
-        <div className="grid grid-cols-4 gap-2 bg-white p-1.5 rounded-2xl border border-[#E8E5E0] shadow-xs">
+        <div className="grid grid-cols-5 gap-1.5 sm:gap-2 bg-white p-1.5 rounded-2xl border border-[#E8E5E0] shadow-xs">
           {(['Todas', CategoriaExp.TIERRA, CategoriaExp.AGUA, CategoriaExp.AIRE] as const).map(
             cat => {
               const isSelected = selectedCategory === cat;
@@ -428,7 +428,7 @@ export const ExploreView: React.FC = () => {
                   key={cat}
                   id={`cat-btn-${cat.toLowerCase()}`}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-center font-outfit cursor-pointer ${
+                  className={`py-2 px-1 sm:py-2.5 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center font-outfit cursor-pointer truncate ${
                     isSelected
                       ? 'bg-[#3FAF6C] text-white shadow-xs'
                       : 'text-[#23404A] hover:bg-[#FFF8F1]'
@@ -439,6 +439,17 @@ export const ExploreView: React.FC = () => {
               );
             }
           )}
+
+          <button
+            id="cat-btn-all-categories"
+            type="button"
+            onClick={() => setActiveScreen('categories')}
+            className="py-2 px-1 sm:py-2.5 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center font-outfit cursor-pointer flex items-center justify-center gap-1 text-[#FF6B35] hover:bg-[#FFF8F1] border border-[#FF6B35]/20 hover:border-[#FF6B35]/50 shadow-xs"
+            title={t('nav.categories', 'Categorías')}
+          >
+            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">{t('nav.categories', 'Categorías')}</span>
+          </button>
         </div>
       </div>
 
@@ -651,14 +662,6 @@ export const ExploreView: React.FC = () => {
             title={t('nav.reservations', 'Mis Reservas')}
           >
             <Heart className="w-6 h-6 stroke-[2]" />
-          </button>
-
-          <button
-            onClick={() => setActiveScreen('categories')}
-            className="flex flex-col items-center gap-1 p-2 rounded-full text-[#FFF8F1]/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-            title={t('nav.categories', 'Categorías')}
-          >
-            <Sparkles className="w-6 h-6 stroke-[2]" />
           </button>
         </div>
       </div>

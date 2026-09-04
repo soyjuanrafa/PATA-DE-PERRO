@@ -24,7 +24,11 @@ export interface CiudadCreativa {
   lat: number;
   lon: number;
   imagen: string;
+  mapa_imagen?: string;
 }
+
+export const MAPA_NICARAGUA_URL =
+  'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Mapa%20de%20Nicaragua%20map.jpg';
 
 export const CIUDADES_CREATIVAS: CiudadCreativa[] = [
   {
@@ -34,7 +38,10 @@ export const CIUDADES_CREATIVAS: CiudadCreativa[] = [
     descripcion: 'Ciudad de aprendizaje, poesía y aventura volcánica.',
     lat: 12.4379,
     lon: -86.878,
-    imagen: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=800&q=80',
+    imagen:
+      'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Leon%20map.jpg',
+    mapa_imagen:
+      'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Leon%20map.jpg',
   },
   {
     id: 'granada',
@@ -43,7 +50,10 @@ export const CIUDADES_CREATIVAS: CiudadCreativa[] = [
     descripcion: 'Joyera colonial, isletas serenas y rica tradición gastronómica.',
     lat: 11.9344,
     lon: -85.956,
-    imagen: 'https://images.unsplash.com/photo-1518638150340-f706e86654de?auto=format&fit=crop&w=800&q=80',
+    imagen:
+      'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Granada%20map.jpg',
+    mapa_imagen:
+      'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Granada%20map.jpg',
   },
   {
     id: 'masaya',
@@ -52,7 +62,10 @@ export const CIUDADES_CREATIVAS: CiudadCreativa[] = [
     descripcion: 'Capital del folklore nicaragüense y artesanías ancestrales.',
     lat: 11.9744,
     lon: -86.0942,
-    imagen: 'https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?auto=format&fit=crop&w=800&q=80',
+    imagen:
+      'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Masaya%20map.jpg',
+    mapa_imagen:
+      'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Masaya%20map.jpg',
   },
   {
     id: 'matagalpa',
@@ -61,7 +74,10 @@ export const CIUDADES_CREATIVAS: CiudadCreativa[] = [
     descripcion: 'Perla del norte, rutas de café orgánico y bosques de neblina.',
     lat: 12.9256,
     lon: -85.9178,
-    imagen: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=800&q=80',
+    imagen:
+      'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=800&q=80',
+    mapa_imagen:
+      'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'ometepe',
@@ -70,7 +86,10 @@ export const CIUDADES_CREATIVAS: CiudadCreativa[] = [
     descripcion: 'Oasis de paz entre dos volcanes e íconos rupestres.',
     lat: 11.4983,
     lon: -85.5786,
-    imagen: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80',
+    imagen:
+      'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Ometepe%20map.jpg',
+    mapa_imagen:
+      'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Ometepe%20map.jpg',
   },
   {
     id: 'esteli',
@@ -79,7 +98,10 @@ export const CIUDADES_CREATIVAS: CiudadCreativa[] = [
     descripcion: 'Murales vibrantes, cañones naturales y cultura de montaña.',
     lat: 13.0918,
     lon: -86.3538,
-    imagen: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80',
+    imagen:
+      'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Esteli%20map.jpg',
+    mapa_imagen:
+      'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Esteli%20map.jpg',
   },
 ];
 

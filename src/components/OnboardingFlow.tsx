@@ -4,12 +4,11 @@
  * Onboarding Flow Component - Uses randomized start screen images (Pantallas de inicio) on each entry
  */
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronsUp, ChevronUp, RotateCw } from 'lucide-react';
 import { getShuffledPantallasInicio, PANTALLAS_INICIO_URLS } from '../utils/imageHelper';
-import { Logo } from './Logo';
 
 interface SlideContent {
   eyebrow: string;
@@ -119,12 +118,8 @@ export const OnboardingFlow: React.FC = () => {
         </motion.div>
       </AnimatePresence>
 
-      {/* Top Header Controls with Official White Brand Logo */}
-      <div className="relative z-10 p-4 sm:p-6 flex justify-between items-center">
-        <div className="bg-[#23404A]/70 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 shadow-md">
-          <Logo variant="white" size="sm" showText />
-        </div>
-
+      {/* Top Header Controls */}
+      <div className="relative z-10 p-4 sm:p-6 flex justify-end items-center">
         <div className="flex items-center gap-2">
           {/* Quick shuffle button to reshuffle start screens randomly */}
           <button

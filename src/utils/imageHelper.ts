@@ -19,6 +19,26 @@ export const BRAND_LOGOS = {
   black: 'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/logo%20pata%20de%20perro%20negro.jpeg',
   blackAndWhite: 'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/logo%20de%20pata%20de%20perro%20blanco%20y%20negro.jpeg',
   impresiones: 'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/logo%20pata%20de%20perro%20impresiones.jpeg',
+  // Transparent logos without background (LGPDP PNGs)
+  lgpdp1: 'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/LGPDP%201.png',
+  lgpdp2: 'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/LGPDP%202.png',
+  lgpdp3: 'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/LGPDP%203.png',
+};
+
+// Authentic Cartographic & Location Maps
+export const MAPS_ASSETS = {
+  nicaragua:
+    'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Mapa%20de%20Nicaragua%20map.jpg',
+  esteli:
+    'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Esteli%20map.jpg',
+  granada:
+    'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Granada%20map.jpg',
+  leon:
+    'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Leon%20map.jpg',
+  masaya:
+    'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Masaya%20map.jpg',
+  ometepe:
+    'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Ometepe%20map.jpg',
 };
 
 // Pantallas de inicio options (8 authentic options to rotate randomly on entry)
@@ -83,6 +103,20 @@ export const IMAGE_FALLBACK_MAP: Record<string, string> = {
     'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Mirador%20del%20Sombrero%20%26%20Descenso%20Ca%C3%B1%C3%B3n%20de%20Somoto.jpg',
   'Ruta del Cacao Orgánico y Tarta Tradicional':
     'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Ruta%20del%20Cacao%20Org%C3%A1nico%20y%20Tarta%20Tradicional.jpg',
+
+  // Map asset mappings
+  'Esteli map.jpg':
+    'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Esteli%20map.jpg',
+  'Granada map.jpg':
+    'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Granada%20map.jpg',
+  'Leon map.jpg':
+    'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Leon%20map.jpg',
+  'Mapa de Nicaragua map.jpg':
+    'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Mapa%20de%20Nicaragua%20map.jpg',
+  'Masaya map.jpg':
+    'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Masaya%20map.jpg',
+  'Ometepe map.jpg':
+    'https://raw.githubusercontent.com/soyjuanrafa/imagenes-y-iconos-de-aplicaciones/main/Ometepe%20map.jpg',
 };
 
 /**
