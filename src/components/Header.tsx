@@ -230,6 +230,16 @@ export const Header: React.FC = () => {
           >
             <Download className="w-4 h-4" />
           </button>
+
+          {/* Quick Logout Button (Desktop) */}
+          <button
+            id="btn-desktop-quick-logout"
+            onClick={() => setShowLogoutConfirm(true)}
+            className="p-2 rounded-full text-rose-300/80 hover:text-rose-200 hover:bg-rose-900/40 transition-colors border border-rose-800/30 cursor-pointer"
+            title={t('nav.logout', 'Cerrar Sesión')}
+          >
+            <LogOut className="w-4 h-4 text-rose-400" />
+          </button>
         </div>
 
         {/* Mobile menu button */}

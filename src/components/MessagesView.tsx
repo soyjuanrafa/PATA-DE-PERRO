@@ -1021,8 +1021,9 @@ export const MessagesView: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <button
+                        type="button"
                         onClick={() => setIsRecordingAudio(false)}
-                        className="px-2.5 py-1 text-xs text-stone-500 hover:text-stone-800"
+                        className="px-2.5 py-1 text-xs text-stone-500 hover:text-stone-800 cursor-pointer"
                       >
                         Cancelar
                       </button>

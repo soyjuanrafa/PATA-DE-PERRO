@@ -430,7 +430,10 @@ export const ARNavigationSim: React.FC = () => {
                   </div>
                   <div className="flex gap-2 justify-center">
                     <button
-                      onClick={() => setActiveScreen('explore')}
+                      onClick={() => {
+                        setSelectedExperience(activeExp);
+                        setActiveScreen('explore');
+                      }}
                       className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg transition-all cursor-pointer"
                     >
                       Ver Ficha de Experiencia

@@ -40,6 +40,7 @@ import {
   HardDrive,
   CheckCircle,
   Cloud,
+  ArrowLeft,
 } from 'lucide-react';
 
 const AUTHORIZED_PIN = '1102';
@@ -539,6 +540,26 @@ export const DevOptionsView: React.FC = () => {
   // Render Unlocked Developer Options Workspace
   return (
     <div className="min-h-screen bg-stone-50 pb-20 pt-6 px-4 sm:px-6 max-w-7xl mx-auto space-y-6">
+      {/* Top Navigation Bar */}
+      <div className="flex items-center justify-between">
+        <button
+          id="btn-dev-back-settings"
+          onClick={() => setActiveScreen('settings')}
+          className="flex items-center gap-2 text-xs font-bold text-[#23404A] hover:text-[#FF6B35] bg-white px-3.5 py-1.5 rounded-full border border-stone-200 shadow-2xs transition-all font-manrope cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Volver a Configuración</span>
+        </button>
+
+        <button
+          id="btn-dev-back-explore"
+          onClick={() => setActiveScreen('explore')}
+          className="flex items-center gap-2 text-xs font-bold text-stone-600 hover:text-[#FF6B35] bg-white px-3.5 py-1.5 rounded-full border border-stone-200 shadow-2xs transition-all font-manrope cursor-pointer"
+        >
+          <span>Ir al Catálogo</span>
+        </button>
+      </div>
+
       {/* Top Header with Master Android Toggle */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-stone-200 shadow-sm">
         <div>

@@ -227,6 +227,10 @@ export interface ExperienceStory {
 
 export interface UserStory {
   id: string;
+  userId?: string;
+  userEmail?: string;
+  authorName?: string;
+  authorAvatar?: string;
   type: 'foto' | 'video';
   mediaUrl: string;
   title: string;

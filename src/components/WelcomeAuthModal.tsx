@@ -187,7 +187,7 @@ export const WelcomeAuthModal: React.FC = () => {
   };
 
   // Submit Handler for Registration (Image 5)
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -238,7 +238,7 @@ export const WelcomeAuthModal: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const result = registerAccount({
+      const result = await registerAccount({
         nombre: regNombre.trim(),
         correo: cleanEmail,
         password: regPassword.trim(),
@@ -373,7 +373,7 @@ export const WelcomeAuthModal: React.FC = () => {
           }
           loginAccount(mockEmail);
         } else {
-          registerAccount({
+          await registerAccount({
             nombre: isDev ? 'Desarrollador GitHub' : `Usuario ${providerName}`,
             correo: mockEmail,
             pais: 'Nicaragua',

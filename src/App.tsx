@@ -32,10 +32,9 @@ const MainAppContent: React.FC = () => {
     user,
     toastMessage,
     activeStoryExperience,
-    setActiveStoryExperience,
     storyModalMode,
-    setStoryModalMode,
-    addPublishedStoryReview,
+    customStoryViewerStories,
+    closeStoryViewer,
   } = useApp();
 
   const renderActiveScreen = () => {
@@ -110,13 +109,8 @@ const MainAppContent: React.FC = () => {
         <ExperienceStoriesModal
           experience={activeStoryExperience}
           initialMode={storyModalMode}
-          onClose={() => {
-            setActiveStoryExperience(null);
-            setStoryModalMode('viewer');
-          }}
-          onStoryPublished={(review) => {
-            addPublishedStoryReview(review);
-          }}
+          customStories={customStoryViewerStories || undefined}
+          onClose={closeStoryViewer}
         />
       )}
 

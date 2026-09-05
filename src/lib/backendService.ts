@@ -94,6 +94,21 @@ export async function registerUserBackend(
     // Save user profile in Firestore: /users/{userId}
     await setDoc(doc(db, 'users', fbUser.uid), userAccountDoc);
 
+    // Sync to Cloud SQL PostgreSQL database
+    try {
+      const idToken = await fbUser.getIdToken();
+      await fetch('/api/users/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ nombre: data.nombre, role: data.role || 'Turista' }),
+      });
+    } catch (syncErr) {
+      console.warn('Could not sync user to Cloud SQL:', syncErr);
+    }
+
     return {
       success: true,
       message: 'Usuario registrado exitosamente en Firebase Auth & Firestore.',

@@ -125,13 +125,25 @@ export const BookingModal: React.FC = () => {
               <span className="text-[#23404A] text-2xl font-extrabold font-outfit">${totalPrice} USD</span>
             </div>
 
-            <button
-              id="btn-confirm-reservation-submit"
-              type="submit"
-              className="w-full py-3.5 bg-[#FF6B35] hover:bg-[#ff5518] text-white font-extrabold rounded-full shadow-md transition-all text-sm uppercase tracking-wider font-outfit cursor-pointer"
-            >
-              Confirmar y Agendar
-            </button>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveBookingExperience(null);
+                  setCompletedCode(null);
+                }}
+                className="w-1/3 py-3.5 bg-stone-200/80 hover:bg-stone-300 text-stone-700 font-bold rounded-full transition-colors text-xs font-outfit cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                id="btn-confirm-reservation-submit"
+                type="submit"
+                className="w-2/3 py-3.5 bg-[#FF6B35] hover:bg-[#ff5518] text-white font-extrabold rounded-full shadow-md transition-all text-xs uppercase tracking-wider font-outfit cursor-pointer"
+              >
+                Confirmar y Agendar
+              </button>
+            </div>
           </form>
         ) : (
           /* Confirmation State with WhatsApp Button */

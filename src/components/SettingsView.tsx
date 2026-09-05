@@ -45,6 +45,7 @@ import {
   Phone,
   Mail,
   Compass,
+  ArrowLeft,
 } from 'lucide-react';
 
 const REQUIRED_PIN = '1102';
@@ -189,6 +190,18 @@ export const SettingsView: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+      {/* Top Navigation Bar */}
+      <div className="flex items-center justify-between">
+        <button
+          id="btn-settings-back-explore"
+          onClick={() => setActiveScreen('explore')}
+          className="flex items-center gap-2 text-xs font-bold text-[#23404A] hover:text-[#FF6B35] bg-white px-3.5 py-1.5 rounded-full border border-stone-200 shadow-2xs transition-all font-manrope cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Volver al Catálogo</span>
+        </button>
+      </div>
+
       {/* Header Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-5">
         <div>

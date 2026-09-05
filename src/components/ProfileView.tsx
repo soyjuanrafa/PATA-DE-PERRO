@@ -805,10 +805,14 @@ export const ProfileView: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('vista_previa')}
-                className="flex-1 sm:flex-none px-5 py-3.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-2xl text-xs sm:text-sm font-bold transition-colors cursor-pointer"
+                onClick={() => {
+                  setNombre(touristUser?.nombre || 'Sofía Guevara');
+                  setBio(touristUser?.bio || '');
+                  setActiveTab('vista_previa');
+                }}
+                className="flex-1 sm:flex-none px-4 py-3.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-2xl text-xs sm:text-sm font-bold transition-colors cursor-pointer"
               >
-                Vista Previa
+                Cancelar
               </button>
               <button
                 id="btn-save-profile"

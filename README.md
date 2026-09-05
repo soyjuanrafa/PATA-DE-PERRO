@@ -58,8 +58,27 @@ El evaluador tiene total libertad para evaluar el sistema mediante cualquiera de
 
 #### Ruta 3: Auditoría Técnica, Seguridad y Persistencia
 1. **Suite de Pruebas Automatizadas en Vivo**: Diríjase a la pestaña **"Pruebas"** en la aplicación o ejecute `npm run test` en consola. Observe la ejecución en tiempo real de las **13 pruebas unitarias** (seguridad XSS, inyecciones SQL, 2FA OTP, algoritmos RA y OAuth de Google).
-2. **Persistencia Híbrida y Fallback**: Compruebe la resiliencia del sistema; la plataforma almacena datos en la nube (Firebase/Cloud SQL) y mantiene sincronización de respaldo en caché local para operar con alta disponibilidad incluso con conectividad inestable.
-3. **Exportación de Respaldo Forense**: En el menú superior o perfil, haga clic en **"Exportar Respaldo"** para obtener el snapshot íntegro de datos en formato `.json`.
+2. **Auditoría de Subida de Cuentas y Base de Datos (Cloud & Relacional)**:
+   - Cada vez que un usuario se registra mediante el formulario, el sistema ejecuta la función `registerUserBackend` (`/src/lib/backendService.ts`), la cual:
+     - Crea la identidad criptográfica en **Firebase Authentication** (`createUserWithEmailAndPassword`).
+     - Almacena el documento completo del perfil en **Cloud Firestore** en la colección `/users/{userId}`.
+     - Ejecuta la llamada autenticada al endpoint de backend `/api/users/sync`, insertando o actualizando el registro en la tabla relacional `users` de **PostgreSQL / Cloud SQL** con Drizzle ORM.
+   - Para verificar en vivo que las cuentas se están subiendo:
+     - Abra las **Herramientas de Desarrollador (DevTools)** del navegador (`F12` o clic derecho > *Inspeccionar*).
+     - Vaya a la pestaña **Red (Network)** y filtre por `fetch/XHR`.
+     - Al registrar una cuenta o iniciar sesión, observará las peticiones exitosas (`200 OK`) a los servicios de Firebase (`identitytoolkit.googleapis.com`, `firestore.googleapis.com`) y a `/api/users/sync`.
+     - Además, puede ingresar con la cuenta de **Auditor / Administrador** (`admin@patadeperro.ni` / `Admin2026!`) para inspeccionar el estado del motor Cloud SQL y las tablas del sistema.
+3. **Persistencia Híbrida y Fallback**: Compruebe la resiliencia del sistema; la plataforma almacena datos en la nube (Firebase/Cloud SQL) y mantiene sincronización de respaldo en caché local para operar con alta disponibilidad incluso con conectividad inestable.
+4. **Exportación de Respaldo Forense**: En el menú superior o perfil, haga clic en **"Exportar Respaldo"** para obtener el snapshot íntegro de datos en formato `.json`.
+
+#### Ruta 4: Verificación de Historias Aisladas por Cuenta (Stories Scoping)
+1. **Aislamiento por Usuario**: Ingrese con una cuenta (por ejemplo, el usuario Turista o su propia cuenta nueva).
+2. **Subir Historia**: En la barra superior de historias, en el círculo **"Tu historia"**, presione el botón **`+`**. Si no ha subido ninguna historia previamente, se abrirá de inmediato el panel interactivo para seleccionar foto, video o escribir su anécdota comunitaria.
+3. **Publicación Inmediata**: Seleccione una imagen y presione **"Publicar historia"**. El círculo personal se iluminará con el anillo degradado y mostrará su historia.
+4. **Prueba de No-Contaminación entre Cuentas**:
+   - Cierre sesión o cambie a otra cuenta distinta (o abra una ventana de incógnito).
+   - Compruebe que la nueva cuenta **no muestra la historia ajena en su círculo personal**: su círculo personal permanece limpio con el botón **`+`** listo para que esa cuenta suba su propio contenido.
+   - En el carrusel de la comunidad, la historia subida por la primera cuenta aparecerá debidamente identificada con el nombre y avatar de su autor original, garantizando total privacidad y delimitación de autoría.
 
 ---
 

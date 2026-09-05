@@ -31,6 +31,7 @@ import {
   Flame,
   KeyRound,
   Send,
+  ArrowLeft,
 } from 'lucide-react';
 
 interface FAQItem {
@@ -262,6 +263,18 @@ export const HelpManualView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-stone-50 pb-24 pt-6 px-4 sm:px-6 max-w-5xl mx-auto space-y-6">
+      {/* Top Navigation Bar */}
+      <div className="flex items-center justify-between">
+        <button
+          id="btn-help-back-explore"
+          onClick={() => setActiveScreen('explore')}
+          className="flex items-center gap-2 text-xs font-bold text-[#23404A] hover:text-[#FF6B35] bg-white px-3.5 py-1.5 rounded-full border border-stone-200 shadow-2xs transition-all font-manrope cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Volver al Catálogo</span>
+        </button>
+      </div>
+
       {/* Header Banner */}
       <div className="bg-gradient-to-br from-[#23404A] via-[#1B323A] to-[#122227] rounded-3xl p-6 sm:p-10 text-white relative overflow-hidden shadow-lg border border-stone-800">
         <div className="absolute top-0 right-0 w-80 h-80 bg-[#FF6B35]/15 rounded-full blur-3xl pointer-events-none"></div>

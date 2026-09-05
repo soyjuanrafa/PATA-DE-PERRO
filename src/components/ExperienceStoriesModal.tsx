@@ -4,7 +4,7 @@
  * Pata de Perro - Instagram-Style Multi-Place Experience Stories Viewer & Community Publisher
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../i18n';
 import { Experiencia, ExperienceStory, PublishedStoryReview, UserStory } from '../types';
@@ -46,6 +46,7 @@ interface ExperienceStoriesModalProps {
   onClose: () => void;
   onStoryPublished?: (review: PublishedStoryReview) => void;
   initialMode?: 'viewer' | 'upload_user_story' | 'user_stories';
+  customStories?: UserStory[];
 }
 
 type StoryFlowStep =
@@ -59,6 +60,7 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
   onClose,
   onStoryPublished,
   initialMode = 'viewer',
+  customStories,
 }) => {
   const {
     experiences,
@@ -73,6 +75,11 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
     user,
   } = useApp();
   const { t } = useTranslation();
+
+  // Stories to display: If customStories provided (viewing a community traveler story), use that;
+  // otherwise strictly use the active logged-in user's own stories.
+  const storiesToDisplay = customStories && customStories.length > 0 ? customStories : userStories;
+  const isViewingCustomCommunityStory = !!(customStories && customStories.length > 0);
 
   // Playlist of all experiences with stories
   const playlist = experiences.length > 0 ? experiences : experience ? [experience] : [];
@@ -97,7 +104,7 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
 
   // Viewer state
   const [isViewingUserStories, setIsViewingUserStories] = useState<boolean>(
-    initialMode === 'user_stories' && userStories.length > 0
+    (initialMode === 'user_stories' || isViewingCustomCommunityStory) && storiesToDisplay.length > 0
   );
   const [currentUserStoryIndex, setCurrentUserStoryIndex] = useState<number>(0);
   const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
@@ -105,7 +112,7 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [flowStep, setFlowStep] = useState<StoryFlowStep>(
-    initialMode === 'upload_user_story' || (initialMode === 'user_stories' && userStories.length === 0)
+    initialMode === 'upload_user_story' || (initialMode === 'user_stories' && storiesToDisplay.length === 0) || (initialMode === 'viewer' && stories.length === 0)
       ? 'finished_choice'
       : 'viewing'
   );
@@ -129,18 +136,29 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentStory: ExperienceStory | undefined = stories[currentSlideIndex];
-  const activeUserStory: UserStory | undefined = userStories[currentUserStoryIndex];
+  const activeUserStory: UserStory | undefined = storiesToDisplay[currentUserStoryIndex];
   const storyDuration = (isViewingUserStories ? 6 : (currentStory?.duration || 6)) * 1000; // in ms
+
+  const isOwnerOfActiveStory = useMemo(() => {
+    if (!activeUserStory) return true;
+    if (isViewingCustomCommunityStory) return false;
+    const currentUserId = user ? ('id_turista' in user ? user.id_turista : user.id_anfitrion) : null;
+    const currentUserEmail = user?.correo?.trim().toLowerCase();
+    if (activeUserStory.userId && currentUserId && activeUserStory.userId === currentUserId) return true;
+    if (activeUserStory.userEmail && currentUserEmail && activeUserStory.userEmail.toLowerCase() === currentUserEmail) return true;
+    if (activeUserStory.userId && currentUserEmail && activeUserStory.userId.toLowerCase() === currentUserEmail) return true;
+    return !customStories;
+  }, [activeUserStory, user, customStories, isViewingCustomCommunityStory]);
 
   // Advance to next user story
   const advanceToNextUserStory = useCallback(() => {
-    if (currentUserStoryIndex < userStories.length - 1) {
+    if (currentUserStoryIndex < storiesToDisplay.length - 1) {
       setCurrentUserStoryIndex(prev => prev + 1);
       setProgress(0);
     } else {
       setFlowStep('finished_choice');
     }
-  }, [currentUserStoryIndex, userStories.length]);
+  }, [currentUserStoryIndex, storiesToDisplay.length]);
 
   // Go to previous user story
   const goToPreviousUserStory = useCallback(() => {
@@ -380,7 +398,7 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
         {/* ========================================================================= */}
         {/* STEP 1: ACTIVE STORY VIEWER SCREEN (User's Own Story OR Community Story) */}
         {/* ========================================================================= */}
-        {flowStep === 'viewing' && isViewingUserStories && userStories.length > 0 && activeUserStory && (
+        {flowStep === 'viewing' && isViewingUserStories && storiesToDisplay.length > 0 && activeUserStory && (
           <div className="relative w-full h-full flex flex-col justify-between bg-black select-none overflow-hidden">
             {/* Background Media: Photo or Video */}
             <div className="absolute inset-0 z-0 flex items-center justify-center bg-black">
@@ -408,7 +426,7 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
             <div className="relative z-20 p-4 space-y-3">
               {/* Progress Segments */}
               <div className="flex items-center gap-1.5 w-full">
-                {userStories.map((s, idx) => {
+                {storiesToDisplay.map((s, idx) => {
                   let fillPercent = 0;
                   if (idx < currentUserStoryIndex) fillPercent = 100;
                   else if (idx === currentUserStoryIndex) fillPercent = progress;
@@ -431,10 +449,10 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
               <div className="flex items-center justify-between text-white">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-10 h-10 rounded-full border-2 border-[#FF5722] overflow-hidden bg-white/20 shrink-0">
-                    {user?.avatar ? (
+                    {activeUserStory.authorAvatar || user?.avatar ? (
                       <img
-                        src={user.avatar}
-                        alt={user.nombre}
+                        src={resolveImageUrl(activeUserStory.authorAvatar || user?.avatar || '')}
+                        alt={activeUserStory.authorName || user?.nombre || 'Tú'}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -446,10 +464,10 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-black font-outfit text-white leading-tight truncate">
-                        {user?.nombre || 'Tú'}
+                        {activeUserStory.authorName || user?.nombre || 'Tú'}
                       </span>
                       <span className="text-[10px] bg-[#FF5722] text-white px-2 py-0.2 rounded-full font-bold shrink-0">
-                        {t('story.yourStory', 'Tu historia')}
+                        {isOwnerOfActiveStory ? t('story.yourStory', 'Tu historia') : 'Comunidad'}
                       </span>
                     </div>
                     <p className="text-[11px] text-white/80 font-manrope truncate max-w-[160px] sm:max-w-[200px]">
@@ -460,41 +478,47 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
 
                 {/* Action buttons */}
                 <div className="flex items-center gap-1.5 shrink-0">
-                  {/* Add another story button */}
-                  <button
-                    id="user-story-add-another-btn"
-                    onClick={() => {
-                      setIsPaused(true);
-                      setUploadedPhotos([]);
-                      setUploadedVideoUrl(null);
-                      setOpinionText('');
-                      setFlowStep('finished_choice');
-                    }}
-                    className="px-2.5 py-1 rounded-full bg-[#FF5722] hover:bg-[#e04a1b] text-white text-[10px] font-black font-outfit flex items-center gap-1 transition-colors cursor-pointer shadow-xs"
-                    title="Subir otra historia (+)"
-                  >
-                    <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                    <span>Subir otra</span>
-                  </button>
+                  
 
-                  {/* Delete this user story */}
-                  <button
-                    id="user-story-delete-btn"
-                    onClick={() => {
-                      deleteUserStory(activeUserStory.id);
-                      showToast('Historia eliminada');
-                      if (userStories.length <= 1) {
+                  {/* Add another story button (only for owner) */}
+                  {isOwnerOfActiveStory && (
+                    <button
+                      id="user-story-add-another-btn"
+                      onClick={() => {
+                        setIsPaused(true);
+                        setUploadedPhotos([]);
+                        setUploadedVideoUrl(null);
+                        setOpinionText('');
                         setFlowStep('finished_choice');
-                      } else {
-                        setCurrentUserStoryIndex(prev => Math.max(0, prev - 1));
-                        setProgress(0);
-                      }
-                    }}
-                    className="w-8 h-8 rounded-full bg-red-600/60 hover:bg-red-600 text-white flex items-center justify-center transition-colors cursor-pointer"
-                    title="Eliminar esta historia"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                      }}
+                      className="px-2.5 py-1 rounded-full bg-[#FF5722] hover:bg-[#e04a1b] text-white text-[10px] font-black font-outfit flex items-center gap-1 transition-colors cursor-pointer shadow-xs"
+                      title="Subir otra historia (+)"
+                    >
+                      <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                      <span>Subir otra</span>
+                    </button>
+                  )}
+
+                  {/* Delete this user story (only for owner) */}
+                  {isOwnerOfActiveStory && (
+                    <button
+                      id="user-story-delete-btn"
+                      onClick={() => {
+                        deleteUserStory(activeUserStory.id);
+                        showToast('Historia eliminada');
+                        if (storiesToDisplay.length <= 1) {
+                          setFlowStep('finished_choice');
+                        } else {
+                          setCurrentUserStoryIndex(prev => Math.max(0, prev - 1));
+                          setProgress(0);
+                        }
+                      }}
+                      className="w-8 h-8 rounded-full bg-red-600/60 hover:bg-red-600 text-white flex items-center justify-center transition-colors cursor-pointer"
+                      title="Eliminar esta historia"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
 
                   <button
                     onClick={() => setIsPaused(p => !p)}
@@ -517,7 +541,7 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
               {/* Counter Indicator */}
               <div className="flex items-center justify-between text-[11px] text-white/80 font-ibm-plex">
                 <span className="bg-black/40 backdrop-blur-xs px-2.5 py-0.5 rounded-full">
-                  Foto / Video {currentUserStoryIndex + 1} de {userStories.length}
+                  Foto / Video {currentUserStoryIndex + 1} de {storiesToDisplay.length}
                 </span>
                 <span className="bg-black/40 backdrop-blur-xs px-2.5 py-0.5 rounded-full">
                   {activeUserStory.date || 'Hoy'}
@@ -679,6 +703,8 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
 
                 {/* Top Action Buttons */}
                 <div className="flex items-center gap-1.5 shrink-0">
+                  
+
                   <button
                     id="story-open-upload-btn"
                     onClick={() => {
@@ -876,11 +902,21 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
               {/* Top Navigation & Close Bar */}
               <div className="flex items-center justify-between">
                 <button
-                  onClick={() => setFlowStep('viewing')}
+                  id="btn-choice-back-stories"
+                  onClick={() => {
+                    if (storiesToDisplay.length > 0) {
+                      setIsViewingUserStories(true);
+                      setFlowStep('viewing');
+                    } else {
+                      setIsViewingUserStories(false);
+                      setFlowStep('viewing');
+                      setCurrentSlideIndex(0);
+                    }
+                  }}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-200 text-stone-700 text-xs font-bold font-outfit hover:bg-stone-300 transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Volver a historias</span>
+                  <span>{storiesToDisplay.length > 0 ? 'Volver a historias' : 'Explorar historias'}</span>
                 </button>
 
                 <button
@@ -898,7 +934,7 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
 
               {/* Header Title: ¿Ya viviste tu experiencia? ¡Compártela con nosotros! */}
               <div className="space-y-1 text-center">
-                <h1 className="text-2xl sm:text-3xl font-black text-[#FF5722] font-outfit uppercase tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-black text-[#FF5722] font-outfit uppercase tracking-tight bg-white">
                   {t('story.didYouLive', '¿Ya viviste tu experiencia?')}
                 </h1>
                 <p className="text-lg font-black text-[#23404A] font-outfit">
@@ -1082,17 +1118,31 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
               </div>
             </div>
 
-            {/* Bottom Button: CONTINUAR / CALIFICAR */}
-            <div className="pt-4 pb-2">
+            {/* Bottom Buttons: Direct Publish or Continue & Rate */}
+            <div className="pt-4 pb-2 space-y-2">
               <button
                 id="story-continue-rating-btn"
                 type="button"
                 onClick={() => setFlowStep('feedback_rating')}
-                className="w-full py-4 px-6 rounded-full bg-[#FF5722] hover:bg-[#e04a1b] text-white font-black text-sm uppercase tracking-wider font-outfit shadow-lg hover:shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-6 rounded-full bg-[#FF5722] hover:bg-[#e04a1b] text-white font-black text-sm uppercase tracking-wider font-outfit shadow-lg hover:shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <span>{t('story.continue', 'CONTINUAR Y CALIFICAR')}</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
+
+              {(uploadedPhotos.length > 0 || uploadedVideoUrl || opinionText.trim()) && (
+                <button
+                  id="story-quick-publish-btn"
+                  type="button"
+                  onClick={handlePublishStory}
+                  className="w-full py-2.5 px-4 rounded-full bg-[#2E9D62] hover:bg-[#258352] text-white font-bold text-xs uppercase tracking-wider font-outfit transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Publicar historia directamente</span>
+                </button>
+              )}
+
+              
             </div>
           </div>
         )}
@@ -1106,6 +1156,7 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
               {/* Back to previous choice */}
               <div className="flex items-center justify-between">
                 <button
+                  id="btn-rating-back"
                   onClick={() => setFlowStep('finished_choice')}
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#FF5722] text-white text-xs font-bold font-outfit hover:bg-[#e04a1b] transition-colors cursor-pointer shadow-xs"
                 >
@@ -1208,7 +1259,7 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
             </div>
 
             {/* Bottom Button: COMPARTIR */}
-            <div className="pt-4 pb-2">
+            <div className="pt-4 pb-2 space-y-2">
               <button
                 id="story-publish-submit-btn"
                 type="button"
@@ -1218,6 +1269,8 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
                 <Check className="w-5 h-5 stroke-[3]" />
                 <span>{t('story.share', 'COMPARTIR HISTORIA')}</span>
               </button>
+
+              
             </div>
           </div>
         )}
@@ -1286,6 +1339,8 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
                   <Plus className="w-4 h-4 stroke-[3]" />
                   <span>Subir otra foto o video</span>
                 </button>
+
+                
               </div>
             </div>
 
@@ -1293,10 +1348,7 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
             <div className="relative z-10 pb-2">
               <div className="bg-[#23404A] text-[#FFF8F1] rounded-2xl p-2.5 shadow-xl border border-white/20 flex items-center justify-around">
                 <button
-                  onClick={() => {
-                    onClose();
-                    setActiveScreen('explore');
-                  }}
+                  onClick={onClose}
                   className="flex flex-col items-center gap-0.5 text-xs font-bold text-white hover:text-[#FF5722] transition-colors cursor-pointer"
                 >
                   <Home className="w-5 h-5" />
@@ -1304,10 +1356,7 @@ export const ExperienceStoriesModal: React.FC<ExperienceStoriesModalProps> = ({
                 </button>
 
                 <button
-                  onClick={() => {
-                    onClose();
-                    setActiveScreen('explore');
-                  }}
+                  onClick={onClose}
                   className="flex flex-col items-center gap-0.5 text-xs font-bold text-white/80 hover:text-white transition-colors cursor-pointer"
                 >
                   <Compass className="w-5 h-5" />

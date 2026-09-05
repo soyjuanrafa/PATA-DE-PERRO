@@ -262,6 +262,14 @@ export const ExperienceDetailModal: React.FC = () => {
 
           <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-2.5">
             <button
+              onClick={() => setSelectedExperience(null)}
+              className="px-3.5 py-3 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-bold transition-colors font-outfit cursor-pointer"
+              title="Cerrar ventana de detalles"
+            >
+              {t('common.close', 'Cerrar')}
+            </button>
+
+            <button
               onClick={() => {
                 setSelectedExperience(null);
                 setActiveStoryExperience(exp);

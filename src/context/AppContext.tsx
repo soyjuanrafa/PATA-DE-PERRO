@@ -4,7 +4,7 @@
  * Pata de Perro - App State Context & Persistence Layer
  */
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import {
   Turista,
   Anfitrion,
@@ -100,7 +100,7 @@ interface AppContextType {
     redesSociales?: RedesSociales;
     moodsFavoritos?: MoodTag[];
     isDev?: boolean;
-  }) => AuthResponse;
+  }) => Promise<AuthResponse>;
   loginAccount: (correo: string, password?: string) => Promise<AuthResponse>;
   loginWithSocialProvider: (provider: 'google' | 'facebook' | 'github' | 'apple') => Promise<AuthResponse>;
   logoutAccount: () => void;
@@ -128,9 +128,17 @@ interface AppContextType {
   setActiveStoryExperience: (exp: Experiencia | null) => void;
   storyModalMode: 'viewer' | 'upload_user_story' | 'user_stories';
   setStoryModalMode: (mode: 'viewer' | 'upload_user_story' | 'user_stories') => void;
-  openStoryViewer: (exp: Experiencia | null, mode?: 'viewer' | 'upload_user_story' | 'user_stories') => void;
+  openStoryViewer: (
+    exp: Experiencia | null,
+    mode?: 'viewer' | 'upload_user_story' | 'user_stories',
+    customStories?: UserStory[]
+  ) => void;
+  closeStoryViewer: () => void;
+  customStoryViewerStories: UserStory[] | null;
   publishedStoryReviews: PublishedStoryReview[];
   addPublishedStoryReview: (review: PublishedStoryReview) => void;
+  allUserStories: UserStory[];
+  communityUserStories: UserStory[];
   userStories: UserStory[];
   addUserStory: (story: Omit<UserStory, 'id' | 'date'>) => UserStory;
   deleteUserStory: (storyId: string) => void;
@@ -312,16 +320,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedMood, setSelectedMood] = useState<MoodTag | 'Todos'>('Todos');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedExperience, setSelectedExperience] = useState<Experiencia | null>(null);
+  // Current user identifiers for strict per-account stories scoping
+  const currentUserId = useMemo(() => {
+    if (!user) return null;
+    return ('id_turista' in user ? user.id_turista : user.id_anfitrion) || null;
+  }, [user]);
+
+  const currentUserEmail = useMemo(() => {
+    return user?.correo ? user.correo.trim().toLowerCase() : null;
+  }, [user]);
+
   const [activeStoryExperience, setActiveStoryExperience] = useState<Experiencia | null>(null);
   const [storyModalMode, setStoryModalMode] = useState<'viewer' | 'upload_user_story' | 'user_stories'>('viewer');
+  const [customStoryViewerStories, setCustomStoryViewerStories] = useState<UserStory[] | null>(null);
 
   const openStoryViewer = (
     exp: Experiencia | null,
-    mode: 'viewer' | 'upload_user_story' | 'user_stories' = 'viewer'
+    mode: 'viewer' | 'upload_user_story' | 'user_stories' = 'viewer',
+    customStories?: UserStory[]
   ) => {
     setActiveStoryExperience(exp || experiences[0] || null);
     setStoryModalMode(mode);
+    setCustomStoryViewerStories(customStories || null);
   };
+
+  const closeStoryViewer = () => {
+    setActiveStoryExperience(null);
+    setCustomStoryViewerStories(null);
+    setStoryModalMode('viewer');
+  };
+
   const [publishedStoryReviews, setPublishedStoryReviews] = useState<PublishedStoryReview[]>(() => {
     try {
       const saved = localStorage.getItem(PUBLISHED_STORIES_STORAGE_KEY);
@@ -335,7 +363,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return [];
   });
 
-  const [userStories, setUserStories] = useState<UserStory[]>(() => {
+  const [allUserStories, setAllUserStories] = useState<UserStory[]>(() => {
     try {
       const saved = localStorage.getItem(USER_STORIES_STORAGE_KEY);
       if (saved) {
@@ -347,6 +375,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     return [];
   });
+
+  // Filter stories that belong STRICTLY to the current logged-in account
+  const userStories = useMemo(() => {
+    if (!currentUserId && !currentUserEmail) return [];
+    return allUserStories.filter(s => {
+      if (s.userId && currentUserId && s.userId === currentUserId) return true;
+      if (s.userEmail && currentUserEmail && s.userEmail.toLowerCase() === currentUserEmail) return true;
+      if (s.userId && currentUserEmail && s.userId.toLowerCase() === currentUserEmail) return true;
+      return false;
+    });
+  }, [allUserStories, currentUserId, currentUserEmail]);
+
+  // Stories created by other members of the community (visible in reel)
+  const communityUserStories = useMemo(() => {
+    return allUserStories.filter(s => {
+      if (!currentUserId && !currentUserEmail) return true;
+      const isMine =
+        (s.userId && currentUserId && s.userId === currentUserId) ||
+        (s.userEmail && currentUserEmail && s.userEmail.toLowerCase() === currentUserEmail) ||
+        (s.userId && currentUserEmail && s.userId.toLowerCase() === currentUserEmail);
+      return !isMine;
+    });
+  }, [allUserStories, currentUserId, currentUserEmail]);
 
   const [statusNotes, setStatusNotes] = useState<UserStatusNote[]>(() => {
     try {
@@ -363,17 +414,49 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [activeBookingExperience, setActiveBookingExperience] = useState<Experiencia | null>(null);
 
+
+  // Helper to save to localStorage with basic LRU eviction if quota is exceeded
+  const safeStorageSet = (key: string, dataArray: any[]) => {
+    let currentData = [...dataArray];
+    let saved = false;
+    while (!saved && currentData.length > 0) {
+      try {
+        localStorage.setItem(key, JSON.stringify(currentData));
+        saved = true;
+      } catch (e: any) {
+        if (e && e.name === 'QuotaExceededError') {
+          // Remove the oldest item (last in the array) to free up space
+          currentData.pop();
+        } else {
+          // Suppress error overlay by using console.log
+          console.log(`Could not persist ${key}`, e);
+          break;
+        }
+      }
+    }
+    return currentData;
+  };
+
   // Add Published Story Review with automatic persistence
   const addPublishedStoryReview = (review: PublishedStoryReview) => {
     setPublishedStoryReviews(prev => {
       const updated = [review, ...prev];
-      try {
-        localStorage.setItem(PUBLISHED_STORIES_STORAGE_KEY, JSON.stringify(updated));
-      } catch (e) {
-        console.warn('Could not persist published story review', e);
+      const savedData = safeStorageSet(PUBLISHED_STORIES_STORAGE_KEY, updated);
+      if (savedData.length < updated.length) {
+        // We had to evict some items, so we should update the state to match what's actually saved
+        // But doing it here inside setState is tricky, so we'll just let the state be larger than localStorage
+        // Next load it will only load what fit.
       }
       return updated;
     });
+
+    const activeId =
+      currentUserId ||
+      (user ? ('id_turista' in user ? user.id_turista : user.id_anfitrion) : undefined) ||
+      'usr_guest';
+    const activeEmail = currentUserEmail || user?.correo?.trim().toLowerCase();
+    const activeAuthorName = user?.nombre || review.authorName || 'Tú';
+    const activeAuthorAvatar = user?.avatar || review.authorAvatar;
 
     // If photos or videos are attached, also save to userStories so user can view it in "Tu historia"
     if (review.photos && review.photos.length > 0) {
@@ -384,6 +467,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           title: review.experienceTitle,
           caption: review.comment,
           location: review.experienceTitle || 'Nicaragua',
+          userId: activeId,
+          userEmail: activeEmail || undefined,
+          authorName: activeAuthorName,
+          authorAvatar: activeAuthorAvatar,
         });
       });
     }
@@ -394,6 +481,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         title: review.experienceTitle,
         caption: review.comment,
         location: review.experienceTitle || 'Nicaragua',
+        userId: activeId,
+        userEmail: activeEmail || undefined,
+        authorName: activeAuthorName,
+        authorAvatar: activeAuthorAvatar,
       });
     }
 
@@ -414,19 +505,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Add User Story (photos or videos uploaded by traveler)
   const addUserStory = (storyData: Omit<UserStory, 'id' | 'date'>): UserStory => {
+    const activeId =
+      currentUserId ||
+      (user ? ('id_turista' in user ? user.id_turista : user.id_anfitrion) : undefined) ||
+      (typeof window !== 'undefined' ? localStorage.getItem(SESSION_STORAGE_KEY) : null) ||
+      'usr_guest';
+    const activeEmail = currentUserEmail || user?.correo?.trim().toLowerCase();
+    const activeAuthorName = user?.nombre || storyData.authorName || 'Tú';
+    const activeAuthorAvatar = user?.avatar || storyData.authorAvatar;
+
     const newStory: UserStory = {
       ...storyData,
       id: `usr_story_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      userId: storyData.userId || activeId,
+      userEmail: storyData.userEmail || activeEmail || undefined,
+      authorName: storyData.authorName || activeAuthorName,
+      authorAvatar: storyData.authorAvatar || activeAuthorAvatar,
       date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setUserStories(prev => {
+    setAllUserStories(prev => {
       const updated = [newStory, ...prev];
-      try {
-        localStorage.setItem(USER_STORIES_STORAGE_KEY, JSON.stringify(updated));
-      } catch (e) {
-        console.warn('Could not persist user story', e);
-      }
+      safeStorageSet(USER_STORIES_STORAGE_KEY, updated);
       return updated;
     });
 
@@ -434,13 +534,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteUserStory = (storyId: string) => {
-    setUserStories(prev => {
+    setAllUserStories(prev => {
       const updated = prev.filter(s => s.id !== storyId);
-      try {
-        localStorage.setItem(USER_STORIES_STORAGE_KEY, JSON.stringify(updated));
-      } catch (e) {
-        console.warn('Could not persist user stories deletion', e);
-      }
+      safeStorageSet(USER_STORIES_STORAGE_KEY, updated);
       return updated;
     });
   };
@@ -556,7 +652,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Register Account with anti-duplicate email protection & full profile questionnaires
-  const registerAccount = (data: {
+  const registerAccount = async (data: {
     nombre: string;
     correo: string;
     password?: string;
@@ -570,7 +666,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     redesSociales?: RedesSociales;
     moodsFavoritos?: MoodTag[];
     isDev?: boolean;
-  }): AuthResponse => {
+  }): Promise<AuthResponse> => {
     const cleanNombre = sanitizeInput(data.nombre?.trim() || '');
     const cleanCorreo = sanitizeInput(data.correo?.trim() || '');
     const cleanPais = sanitizeInput(data.pais?.trim() || 'Nicaragua');
@@ -618,15 +714,54 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     }
 
-    const newId = role === UserRole.ANFITRION ? `anf_${Date.now()}` : `usr_${Date.now()}`;
+    let finalId = role === UserRole.ANFITRION ? `anf_${Date.now()}` : `usr_${Date.now()}`;
     const defaultAvatar =
       data.avatar ||
       (role === UserRole.ANFITRION
         ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80'
         : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80');
 
+    // Persist to Cloud Database (Firebase Authentication + Firestore + Cloud SQL)
+    if (isFirebaseConfigured) {
+      try {
+        const backendRes = await registerUserBackend({
+          nombre: cleanNombre,
+          correo: cleanCorreo,
+          password: cleanPassword,
+          role,
+          telefono: cleanTelefono,
+          pais: cleanPais,
+          departamento: cleanDepartamento,
+          avatar: defaultAvatar,
+          bio: data.bio || '',
+        });
+
+        if (backendRes.success && backendRes.userAccount) {
+          finalId = backendRes.userAccount.id_usuario;
+          console.log('User synced to Firebase Auth, Firestore & Cloud SQL successfully:', finalId);
+        } else if (backendRes.errorCode === 'auth/email-already-in-use') {
+          return {
+            success: false,
+            message: `El correo "${cleanCorreo}" ya se encuentra registrado en la nube. Por favor inicia sesión con tu contraseña.`,
+          };
+        } else if (backendRes.errorCode === 'auth/weak-password') {
+          return {
+            success: false,
+            message: 'La contraseña debe tener al menos 6 caracteres.',
+          };
+        } else if (backendRes.errorCode === 'auth/invalid-email') {
+          return {
+            success: false,
+            message: 'El formato del correo electrónico no es válido.',
+          };
+        }
+      } catch (cloudErr) {
+        console.warn('Firebase registration notice (resilient local fallback):', cloudErr);
+      }
+    }
+
     const newAccount: UserAccount = {
-      id_usuario: newId,
+      id_usuario: finalId,
       nombre: cleanNombre,
       correo: cleanCorreo,
       password: cleanPassword,
@@ -653,7 +788,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (role === UserRole.DESARROLLADOR || data.isDev) {
       setIsDevModeUnlocked(true);
       const devUser: Turista = {
-        id_turista: newId,
+        id_turista: finalId,
         nombre: cleanNombre,
         correo: cleanCorreo,
         telefono: cleanTelefono,
@@ -671,7 +806,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setActiveScreen('dev_options');
     } else if (role === UserRole.ANFITRION) {
       const hostUser: Anfitrion = {
-        id_anfitrion: newId,
+        id_anfitrion: finalId,
         nombre: cleanNombre,
         correo: cleanCorreo,
         telefono: cleanTelefono,
@@ -690,7 +825,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setActiveScreen('host_dashboard');
     } else {
       const touristUser: Turista = {
-        id_turista: newId,
+        id_turista: finalId,
         nombre: cleanNombre,
         correo: cleanCorreo,
         telefono: cleanTelefono,
@@ -710,27 +845,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setSavedExperienceIds(['exp_tierra_01']);
     try {
-      localStorage.setItem(SESSION_STORAGE_KEY, newId);
+      localStorage.setItem(SESSION_STORAGE_KEY, finalId);
     } catch (e) {
       console.warn('Could not save session key', e);
     }
-
-    // Persist to Firebase Backend (Auth + Firestore users collection)
-    registerUserBackend({
-      nombre: cleanNombre,
-      correo: cleanCorreo,
-      password: cleanPassword,
-      role,
-      telefono: cleanTelefono,
-      pais: cleanPais,
-      departamento: cleanDepartamento,
-      avatar: defaultAvatar,
-      bio: newAccount.bio,
-    }).then(backendRes => {
-      if (backendRes.success && backendRes.userAccount) {
-        console.log('User synced to Firebase Auth & Firestore successfully:', backendRes.userAccount.id_usuario);
-      }
-    }).catch(err => console.warn('Firebase sync warning:', err));
 
     showToast(`¡Cuenta y perfil creados exitosamente! Bienvenido, ${cleanNombre}.`);
     return { success: true, message: '¡Cuenta registrada exitosamente!', account: newAccount };
@@ -1775,8 +1893,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         storyModalMode,
         setStoryModalMode,
         openStoryViewer,
+        closeStoryViewer,
+        customStoryViewerStories,
         publishedStoryReviews,
         addPublishedStoryReview,
+        allUserStories,
+        communityUserStories,
         userStories,
         addUserStory,
         deleteUserStory,

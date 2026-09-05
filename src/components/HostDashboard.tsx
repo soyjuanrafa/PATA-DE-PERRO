@@ -35,6 +35,7 @@ import {
   CheckCircle2,
   AlertCircle,
   HelpCircle,
+  ArrowLeft,
 } from 'lucide-react';
 
 const PRESET_EXPERIENCE_PHOTOS = [
@@ -280,6 +281,18 @@ export const HostDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-stone-50 pb-24 pt-6 px-4 sm:px-6 max-w-7xl mx-auto space-y-6">
+      {/* Top Navigation Bar */}
+      <div className="flex items-center justify-between">
+        <button
+          id="btn-host-back-explore"
+          onClick={() => setActiveScreen('explore')}
+          className="flex items-center gap-2 text-xs font-bold text-[#23404A] hover:text-[#FF6B35] bg-white px-3.5 py-1.5 rounded-full border border-stone-200 shadow-2xs transition-all font-manrope cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Volver al Catálogo</span>
+        </button>
+      </div>
+
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -460,7 +473,7 @@ export const HostDashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsEditingHostProfile(false)}
-                className="px-4 py-2 text-xs font-bold text-stone-600 hover:text-stone-900"
+                className="px-4 py-2 text-xs font-bold text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 rounded-2xl transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
@@ -920,7 +933,7 @@ export const HostDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsAddingModalOpen(false)}
-                  className="px-5 py-2.5 text-xs font-bold text-stone-600 hover:text-stone-900"
+                  className="px-5 py-2.5 text-xs font-bold text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 rounded-2xl transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
