@@ -18,9 +18,11 @@ export const requireAuth = async (
 
   const token = authHeader.split('Bearer ')[1];
   try {
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    req.user = decodedToken;
-    return next();
+    if (adminAuth) {
+      const decodedToken = await adminAuth.verifyIdToken(token);
+      req.user = decodedToken;
+      return next();
+    }
   } catch (error) {
     // In development, fallback to extracting user claims from Firebase JWT payload if adminAuth lacks service account
     if (process.env.NODE_ENV !== 'production' && token) {

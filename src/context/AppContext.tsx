@@ -51,6 +51,8 @@ import {
   saveReservationBackend,
   signInWithSocialBackend,
 } from '../lib/backendService';
+import { isFirebaseConfigured } from '../lib/firebase';
+
 
 export type ActiveScreen =
   | 'onboarding'
@@ -99,7 +101,7 @@ interface AppContextType {
     moodsFavoritos?: MoodTag[];
     isDev?: boolean;
   }) => AuthResponse;
-  loginAccount: (correo: string, password?: string) => AuthResponse;
+  loginAccount: (correo: string, password?: string) => Promise<AuthResponse>;
   loginWithSocialProvider: (provider: 'google' | 'facebook' | 'github' | 'apple') => Promise<AuthResponse>;
   logoutAccount: () => void;
   switchAccount: (accountId: string) => boolean;
@@ -734,8 +736,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { success: true, message: '¡Cuenta registrada exitosamente!', account: newAccount };
   };
 
-  // Login with existing account
-  const loginAccount = (correo: string, password?: string): AuthResponse => {
+  // Login with existing account (supports local cache + Firebase Cloud Authentication across all devices)
+  const loginAccount = async (correo: string, password?: string): Promise<AuthResponse> => {
     // Check if currently locked out due to excessive failed attempts
     const lockoutSecs = getLoginLockoutRemainingSeconds();
     if (lockoutSecs > 0) {
@@ -757,13 +759,70 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return { success: false, message: 'Por favor ingresa tu correo electrónico o nombre de usuario.' };
     }
 
-    // Lookup account by email or username
-    const found = accounts.find(
+    // Lookup account by email or username in local storage
+    let found = accounts.find(
       a =>
         a.correo.trim().toLowerCase() === cleanCorreo ||
         a.correo.split('@')[0].toLowerCase() === cleanCorreo ||
         a.nombre.trim().toLowerCase() === cleanCorreo
     );
+
+    // If account not found in this device's local storage OR password doesn't match cached copy,
+    // authenticate directly with Firebase Cloud Authentication & Firestore
+    if ((!found || (password && found.password && found.password !== password)) && isFirebaseConfigured) {
+      try {
+        const backendRes = await loginUserBackend(cleanCorreo, password);
+        if (backendRes.success && backendRes.userAccount) {
+          const cloudAcc: UserAccount = {
+            id_usuario: backendRes.userAccount.id_usuario,
+            nombre: backendRes.userAccount.nombre,
+            correo: backendRes.userAccount.correo,
+            password: password || found?.password || '123456',
+            role: (backendRes.userAccount.role as any) || found?.role || UserRole.TURISTA,
+            avatar: backendRes.userAccount.avatar || found?.avatar || '',
+            telefono: backendRes.userAccount.telefono || found?.telefono || '',
+            pais: backendRes.userAccount.pais || found?.pais || 'Nicaragua',
+            departamento: backendRes.userAccount.departamento || found?.departamento || 'León',
+            ciudad: backendRes.userAccount.ciudad || found?.ciudad || 'León',
+            bio: backendRes.userAccount.bio || found?.bio || '',
+            savedExperienceIds: backendRes.userAccount.savedExperienceIds || found?.savedExperienceIds || ['exp_tierra_01'],
+            reservas: backendRes.userAccount.reservas || found?.reservas || [],
+            chatThreads: backendRes.userAccount.chatThreads || found?.chatThreads || [],
+            fechaRegistro: backendRes.userAccount.fechaRegistro || new Date().toISOString().split('T')[0],
+            ultimoAcceso: new Date().toISOString(),
+          };
+
+          // Save account on this device so next operations are fast
+          setAccounts(prev => {
+            const index = prev.findIndex(
+              a => a.id_usuario === cloudAcc.id_usuario || a.correo.toLowerCase() === cloudAcc.correo.toLowerCase()
+            );
+            if (index >= 0) {
+              const updated = [...prev];
+              updated[index] = { ...updated[index], ...cloudAcc };
+              return updated;
+            }
+            return [cloudAcc, ...prev];
+          });
+
+          found = cloudAcc;
+        } else if (!found && backendRes.errorCode) {
+          const attempt = recordFailedLoginAttempt();
+          if (attempt.isLocked) {
+            return {
+              success: false,
+              message: `Demasiados intentos fallidos. Acceso suspendido por ${attempt.remainingSeconds} segundos.`,
+            };
+          }
+          return {
+            success: false,
+            message: backendRes.message || `No encontramos ninguna cuenta vinculada a "${correo}".`,
+          };
+        }
+      } catch (cloudErr) {
+        console.warn('Firebase cloud login sync note:', cloudErr);
+      }
+    }
 
     if (!found) {
       const attempt = recordFailedLoginAttempt();

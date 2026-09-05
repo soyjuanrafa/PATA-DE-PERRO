@@ -265,7 +265,7 @@ export const WelcomeAuthModal: React.FC = () => {
   };
 
   // Submit Handler for Login (Image 6)
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -298,7 +298,7 @@ export const WelcomeAuthModal: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const result = loginAccount(cleanIdentifier, loginPassword.trim());
+      const result = await loginAccount(cleanIdentifier, loginPassword.trim());
       if (result.success) {
         setSuccessMessage('¡Sesión iniciada con éxito! Entrando a Pata de Perro...');
       } else {

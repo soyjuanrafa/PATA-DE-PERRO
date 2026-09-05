@@ -17,11 +17,17 @@ jobs:
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
+      - name: Setup Configuration Files
+        run: |
+          if [ ! -f firebase-applet-config.json ]; then
+            cp firebase-applet-config.example.json firebase-applet-config.json
+          fi
+
       - name: Install Project Dependencies
-        run: npm ci
+        run: npm ci || npm install
 
       - name: Security Audit & Code Linting
         run: |

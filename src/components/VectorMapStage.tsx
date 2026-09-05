@@ -138,13 +138,31 @@ export const VectorMapStage: React.FC<VectorMapProps> = ({
 
   // Coordinated positions for cities
   const cityPositions = useMemo(() => {
-    return cities.map(city => ({
-      city,
-      ...projectWGS84(city.lat, city.lon),
-      count: experiences.filter(
-        e => e.ciudad_creativa.toLowerCase() === city.nombre.toLowerCase()
-      ).length,
-    }));
+    return cities.map(city => {
+      const pos = projectWGS84(city.lat, city.lon);
+      const name = city.nombre.toLowerCase();
+      let labelOffset = { dx: 0, dy: -22 };
+      if (name.includes('masaya')) {
+        labelOffset = { dx: -30, dy: -24 }; // Prevent collision with Granada
+      } else if (name.includes('granada')) {
+        labelOffset = { dx: 30, dy: -24 };  // Prevent collision with Masaya
+      } else if (name.includes('ometepe')) {
+        labelOffset = { dx: 18, dy: 24 };   // Below the island
+      } else if (name.includes('matagalpa')) {
+        labelOffset = { dx: 14, dy: -23 };
+      } else if (name.includes('san juan del sur')) {
+        labelOffset = { dx: -14, dy: 24 };
+      }
+
+      return {
+        city,
+        ...pos,
+        labelOffset,
+        count: experiences.filter(
+          e => e.ciudad_creativa.toLowerCase() === city.nombre.toLowerCase()
+        ).length,
+      };
+    });
   }, [cities, experiences]);
 
   // Coordinated positions for experiences
@@ -236,9 +254,10 @@ export const VectorMapStage: React.FC<VectorMapProps> = ({
           </linearGradient>
 
           <linearGradient id="nicaraguaLandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#f7f3e8" />
-            <stop offset="50%" stopColor="#edf3ec" />
-            <stop offset="100%" stopColor="#e4eee4" />
+            <stop offset="0%" stopColor="#fdfbf7" />
+            <stop offset="30%" stopColor="#f5ede2" />
+            <stop offset="65%" stopColor="#eaf3ea" />
+            <stop offset="100%" stopColor="#dceade" />
           </linearGradient>
 
           <linearGradient id="lakeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -303,67 +322,159 @@ export const VectorMapStage: React.FC<VectorMapProps> = ({
         </g>
 
         {/* Neighboring Country Silhouettes */}
-        <path
-          d="M 0,0 L 920,0 L 920,95 Q 750,90 600,105 Q 450,140 300,120 Q 180,110 90,190 L 0,210 Z"
-          fill="#e2dfd7"
-          opacity="0.4"
-        />
-        <text x="240" y="70" fill="#a49f93" fontSize="11" fontWeight="700" letterSpacing="4">
-          HONDURAS
-        </text>
+        <g id="neighbor-countries">
+          {/* Honduras (North) */}
+          <path
+            d="M 0,0 L 920,0 L 920,14 L 891.8,14.8 L 826.1,11.9 L 799.5,31.3 L 733.0,49.9 L 684.6,50.0 L 642.2,68.0 L 603.8,61.6 L 571.2,39.9 L 551.1,44.0 L 526.5,78.0 L 505.0,106.0 L 438.1,145.2 L 402.8,162.1 L 383.1,179.8 L 326.5,151.0 L 285.2,189.0 L 245.2,187.9 L 200.3,191.3 L 204.4,261.2 L 176.2,262.5 L 152.2,295.0 L 92.6,300.8 L 78.1,310.9 L 46.5,289.5 L 25.2,311.5 L 0,260 Z"
+            fill="#eae6dc"
+            stroke="#cfc7b8"
+            strokeWidth="1.2"
+            opacity="0.85"
+          />
+          <text x="320" y="65" fill="#999182" fontSize="12" fontWeight="800" letterSpacing="5">
+            HONDURAS
+          </text>
 
-        <path
-          d="M 280,640 Q 360,590 480,595 Q 600,600 700,640 Z"
-          fill="#e2dfd7"
-          opacity="0.4"
-        />
-        <text x="440" y="630" fill="#a49f93" fontSize="11" fontWeight="700" letterSpacing="4">
-          COSTA RICA
-        </text>
+          {/* Costa Rica (South) */}
+          <path
+            d="M 400.1,570.5 L 429.0,552.2 L 555.3,589.9 L 599.3,571.4 L 660.1,583.2 L 691.9,612.5 L 748.4,622.0 L 794.3,591.8 L 920,591.8 L 920,640 L 0,640 L 0,570.5 Z"
+            fill="#eae6dc"
+            stroke="#cfc7b8"
+            strokeWidth="1.2"
+            opacity="0.85"
+          />
+          <text x="460" y="625" fill="#999182" fontSize="12" fontWeight="800" letterSpacing="5">
+            COSTA RICA
+          </text>
+        </g>
 
-        {/* Territorial Contour of Nicaragua (Vector Base) */}
+        {/* Coastal Surf Buffer / Shallow Shelf */}
+        <path
+          d="M 400.1,570.5 L 370.0,547.1 L 333.8,525.7 L 280.0,495.0 L 244.2,468.4 L 202.0,420.4 L 150.0,395.0 L 121.2,375.7 L 75.0,345.0 L 25.2,311.5 L 46.5,289.5 L 78.1,310.9 L 92.6,300.8 L 152.2,295.0 L 176.2,262.5 L 204.4,261.2 L 200.3,191.3 L 245.2,187.9 L 285.2,189.0 L 326.5,151.0 L 383.1,179.8 L 402.8,162.1 L 438.1,145.2 L 505.0,106.0 L 526.5,78.0 L 551.1,44.0 L 571.2,39.9 L 603.8,61.6 L 642.2,68.0 L 684.6,50.0 L 733.0,49.9 L 799.5,31.3 L 826.1,11.9 L 891.8,14.8 L 875.3,28.5 L 865.5,60.2 L 885.1,112.3 L 840.9,160.7 L 820.4,217.9 L 814.2,280.6 L 824.5,317.3 L 829.3,381.3 L 800.0,395.3 L 782.1,456.1 L 795.3,493.6 L 756.0,530.0 L 765.0,568.5 L 794.3,591.8 L 748.4,622.0 L 691.9,612.5 L 660.1,583.2 L 599.3,571.4 L 555.3,589.9 L 429.0,552.2 Z"
+          fill="none"
+          stroke="#b8e1f0"
+          strokeWidth="8"
+          strokeLinejoin="round"
+          opacity="0.6"
+        />
+
+        {/* Territorial Contour of Nicaragua (Geographically Accurate WGS84 Base) */}
         <path
           id="nicaragua-mainland"
-          d="
-            M 80,245
-            C 110,210 160,180 230,160
-            C 280,145 350,135 430,115
-            C 490,100 580,85 660,80
-            C 740,75 800,80 840,90
-            C 880,100 895,140 885,190
-            C 875,240 870,290 855,350
-            C 845,390 830,440 820,490
-            C 810,540 760,570 710,580
-            C 650,590 570,585 520,575
-            C 470,565 420,580 370,570
-            C 340,560 330,535 315,505
-            C 300,470 280,455 250,440
-            C 210,420 180,390 140,360
-            C 105,335 70,300 55,275
-            C 50,265 65,250 80,245
-            Z
-          "
+          d="M 400.1,570.5 L 370.0,547.1 L 333.8,525.7 L 280.0,495.0 L 244.2,468.4 L 202.0,420.4 L 150.0,395.0 L 121.2,375.7 L 75.0,345.0 L 25.2,311.5 L 46.5,289.5 L 78.1,310.9 L 92.6,300.8 L 152.2,295.0 L 176.2,262.5 L 204.4,261.2 L 200.3,191.3 L 245.2,187.9 L 285.2,189.0 L 326.5,151.0 L 383.1,179.8 L 402.8,162.1 L 438.1,145.2 L 505.0,106.0 L 526.5,78.0 L 551.1,44.0 L 571.2,39.9 L 603.8,61.6 L 642.2,68.0 L 684.6,50.0 L 733.0,49.9 L 799.5,31.3 L 826.1,11.9 L 891.8,14.8 L 875.3,28.5 L 865.5,60.2 L 885.1,112.3 L 840.9,160.7 L 820.4,217.9 L 814.2,280.6 L 824.5,317.3 L 829.3,381.3 L 800.0,395.3 L 782.1,456.1 L 795.3,493.6 L 756.0,530.0 L 765.0,568.5 L 794.3,591.8 L 748.4,622.0 L 691.9,612.5 L 660.1,583.2 L 599.3,571.4 L 555.3,589.9 L 429.0,552.2 Z"
           fill="url(#nicaraguaLandGrad)"
-          stroke="#417056"
+          stroke="#2E7D4D"
           strokeWidth="2.2"
           strokeLinejoin="round"
           filter="url(#mapShadow)"
         />
 
-        {/* Authentic Illustrated Map of Nicaragua Layer */}
-        {(mapMode === 'illustrated' || mapMode === 'hybrid') && (
-          <g id="nicaragua-cartographic-layer" className="transition-opacity duration-300">
-            <image
-              href={MAPA_NICARAGUA_URL}
-              x="45"
-              y="35"
-              width="830"
-              height="570"
-              preserveAspectRatio="xMidYMid meet"
-              opacity={mapMode === 'illustrated' ? 0.98 : 0.72}
-              filter="url(#mapShadow)"
-              className="pointer-events-none"
+        {/* Regional Boundaries (Subtle Cartographic Lines) */}
+        <g stroke="#9C8B74" strokeWidth="0.9" strokeDasharray="3,3" opacity="0.35">
+          {/* Occidente divider */}
+          <path d="M 152.2,295.0 Q 185,340 202.0,420.4" fill="none" />
+          {/* Las Segovias / North divider */}
+          <path d="M 285.2,189.0 Q 295,240 310,290 Q 320,330 334,405" fill="none" />
+          {/* Central / Chontales divider */}
+          <path d="M 438.1,145.2 Q 430,220 440,300 Q 450,380 465,430" fill="none" />
+          {/* Río San Juan border */}
+          <path d="M 576,566 Q 640,550 748.4,622.0" fill="none" />
+        </g>
+
+        {/* Major Rivers */}
+        <g stroke="#7FBED9" strokeWidth="1.2" fill="none" opacity="0.8">
+          {/* Río San Juan (outlet from Lake Cocibolca to Caribbean) */}
+          <path d="M 576,566 Q 630,578 660.1,583.2 Q 691.9,612.5 748.4,622.0 Q 770,610 794.3,591.8" />
+          {/* Río Coco / Wangki (northern border) */}
+          <path d="M 326.5,151.0 Q 383.1,179.8 438.1,145.2 Q 505.0,106.0 603.8,61.6 Q 733.0,49.9 891.8,14.8" />
+        </g>
+
+        {/* Major Water Bodies: Lago Xolotlán and Lago Cocibolca */}
+        <g id="lakes-and-islands">
+          {/* Lago Xolotlán (Lake Managua) */}
+          <g id="lago-xolotlan">
+            <path
+              d="M 230,392 C 235,372 258,358 290,362 C 318,366 338,382 334,405 C 330,418 312,422 288,420 C 266,418 260,405 250,407 C 238,410 226,402 230,392 Z"
+              fill="url(#lakeGrad)"
+              stroke="#5E9DB6"
+              strokeWidth="1.4"
             />
+            <text x="282" y="394" textAnchor="middle" fill="#2C6D86" fontSize="8" fontWeight="800" opacity="0.9">
+              Lago Xolotlán
+            </text>
+          </g>
+
+          {/* Lago Cocibolca (Lake Nicaragua) */}
+          <g id="lago-cocibolca">
+            <path
+              d="M 353,450 C 370,432 415,418 460,430 C 505,442 552,475 572,515 C 588,545 585,564 576,566 C 555,568 515,565 465,560 C 425,555 395,542 376,518 C 360,496 352,472 353,450 Z"
+              fill="url(#lakeGrad)"
+              stroke="#5E9DB6"
+              strokeWidth="1.8"
+            />
+            <text x="475" y="495" textAnchor="middle" fill="#235D75" fontSize="11" fontWeight="800" letterSpacing="1" opacity="0.95">
+              Lago Cocibolca
+            </text>
+
+            {/* Isla Zapatera */}
+            <ellipse cx="375" cy="466" rx="6" ry="4" fill="#5B8662" stroke="#37553D" strokeWidth="0.8" />
+
+            {/* Archipiélago de Solentiname */}
+            <g opacity="0.9">
+              <ellipse cx="542" cy="552" rx="5" ry="2.5" fill="#5B8662" />
+              <ellipse cx="550" cy="554" rx="3.5" ry="2" fill="#5B8662" />
+              <ellipse cx="536" cy="555" rx="3" ry="2" fill="#5B8662" />
+            </g>
+
+            {/* Isla de Ometepe (Hourglass Twin Volcano Island) */}
+            <g id="isla-ometepe" filter="url(#pinShadow)">
+              <path
+                d="M 420,500 C 426,494 435,496 433,504 C 431,509 426,507 428,512 C 432,518 424,524 419,520 C 415,516 418,510 415,507 C 412,504 416,498 420,500 Z"
+                fill="#3B6F45"
+                stroke="#24482B"
+                strokeWidth="1.2"
+              />
+              {/* Concepción & Maderas peaks */}
+              <circle cx="423" cy="502" r="1.6" fill="#F1F5F9" />
+              <circle cx="425" cy="514" r="1.3" fill="#E2E8F0" />
+              <text x="444" y="513" fill="#1C3822" fontSize="7.5" fontWeight="900">
+                Ometepe
+              </text>
+            </g>
+          </g>
+        </g>
+
+        {/* Volcanic Chain of the Pacific (Cinturón Volcánico de Nicaragua) */}
+        {(mapMode === 'illustrated' || mapMode === 'hybrid') && (
+          <g id="volcanic-arc" opacity="0.85">
+            {/* Cerro Negro */}
+            <g transform="translate(185, 365)">
+              <polygon points="0,-6 5,3 -5,3" fill="#5A4738" stroke="#3A2D23" strokeWidth="0.8" />
+              <circle cx="0" cy="-6" r="1.2" fill="#FF5722" />
+              <text x="0" y="9" textAnchor="middle" fill="#6B5B4D" fontSize="6" fontWeight="700">
+                V. Cerro Negro
+              </text>
+            </g>
+
+            {/* Momotombo */}
+            <g transform="translate(232, 382)">
+              <polygon points="0,-7 6,3 -6,3" fill="#5A4738" stroke="#3A2D23" strokeWidth="0.8" />
+              <circle cx="0" cy="-7" r="1.2" fill="#FF5722" />
+              <text x="0" y="9" textAnchor="middle" fill="#6B5B4D" fontSize="6" fontWeight="700">
+                V. Momotombo
+              </text>
+            </g>
+
+            {/* Masaya */}
+            <g transform="translate(320, 448)">
+              <polygon points="0,-6 5,3 -5,3" fill="#5A4738" stroke="#3A2D23" strokeWidth="0.8" />
+              <circle cx="0" cy="-6" r="1.2" fill="#FF5722" />
+            </g>
+
+            {/* Mombacho */}
+            <g transform="translate(358, 462)">
+              <polygon points="0,-6 5,3 -5,3" fill="#3D5C43" stroke="#253D2A" strokeWidth="0.8" />
+            </g>
           </g>
         )}
 
@@ -403,73 +514,14 @@ export const VectorMapStage: React.FC<VectorMapProps> = ({
           strokeWidth="1"
         />
 
-        {/* Major Water Bodies (Active in vector/hybrid modes) */}
-        {mapMode !== 'illustrated' && (
-          <>
-            {/* Lago Xolotlán */}
-            <g id="lago-xolotlan">
-              <path
-                d="
-                  M 240,360
-                  C 260,345 295,350 315,365
-                  C 330,378 325,395 305,405
-                  C 285,415 255,410 240,395
-                  C 225,380 225,370 240,360
-                  Z
-                "
-                fill="url(#lakeGrad)"
-                stroke="#68a9c2"
-                strokeWidth="1.4"
-              />
-              <text x="250" y="385" fill="#3b7b95" fontSize="8" fontWeight="700" opacity="0.9">
-                Lago Xolotlán
-              </text>
-            </g>
-
-            {/* Lago Cocibolca */}
-            <g id="lago-cocibolca">
-              <path
-                d="
-                  M 350,440
-                  C 380,410 430,410 480,430
-                  C 530,450 565,480 575,525
-                  C 585,565 550,585 500,580
-                  C 450,575 400,550 370,520
-                  C 345,495 335,465 350,440
-                  Z
-                "
-                fill="url(#lakeGrad)"
-                stroke="#68a9c2"
-                strokeWidth="1.6"
-              />
-              <text x="440" y="475" fill="#2c6d86" fontSize="10" fontWeight="800" opacity="0.9">
-                Lago Cocibolca
-              </text>
-
-              {/* Isla Ometepe */}
-              <path
-                d="
-                  M 445,495
-                  C 455,488 468,492 468,502
-                  C 468,510 458,518 450,518
-                  C 440,518 438,505 445,495
-                  Z
-                "
-                fill="#e4d7bf"
-                stroke="#6c5836"
-                strokeWidth="1.2"
-              />
-            </g>
-          </>
-        )}
-
         {/* Cultural Heritage Route Links */}
-        <g stroke="#e2885c" strokeWidth="1.4" strokeDasharray="3,3" opacity="0.65">
-          <line x1="172" y1="367" x2="320" y2="431" /> {/* León -> Masaya */}
-          <line x1="320" y1="431" x2="346" y2="436" /> {/* Masaya -> Granada */}
-          <line x1="346" y1="436" x2="452" y2="498" /> {/* Granada -> Ometepe */}
-          <line x1="172" y1="367" x2="271" y2="277" /> {/* León -> Estelí */}
-          <line x1="271" y1="277" x2="353" y2="300" /> {/* Estelí -> Matagalpa */}
+        <g stroke="#E07A5F" strokeWidth="1.6" strokeDasharray="3,3" opacity="0.75">
+          <line x1="177" y1="379" x2="327" y2="445" /> {/* León -> Masaya */}
+          <line x1="327" y1="445" x2="353" y2="451" /> {/* Masaya -> Granada */}
+          <line x1="353" y1="451" x2="426" y2="508" stroke="#3D708F" strokeDasharray="4,4" /> {/* Granada -> Ometepe ferry */}
+          <line x1="177" y1="379" x2="277" y2="286" /> {/* León -> Estelí */}
+          <line x1="277" y1="286" x2="361" y2="309" /> {/* Estelí -> Matagalpa */}
+          <line x1="353" y1="451" x2="370" y2="547" /> {/* Granada -> San Juan del Sur */}
         </g>
 
         {/* Experience Points of Interest (POIs) */}
@@ -514,7 +566,7 @@ export const VectorMapStage: React.FC<VectorMapProps> = ({
           })}
 
         {/* Creative Cities Primary Pins with Authentic Map Photo Badges */}
-        {cityPositions.map(({ city, x, y, count }) => {
+        {cityPositions.map(({ city, x, y, count, labelOffset }) => {
           const isSelected = selectedCity.id === city.id;
           return (
             <g
@@ -572,8 +624,8 @@ export const VectorMapStage: React.FC<VectorMapProps> = ({
                 🗺️
               </text>
 
-              {/* City Label Badge */}
-              <g transform={`translate(${x}, ${y - (isSelected ? 24 : 20)})`}>
+              {/* City Label Badge with Smart Anti-Overlap Offsets */}
+              <g transform={`translate(${x + (labelOffset?.dx || 0)}, ${y + (labelOffset?.dy || -22) + (isSelected ? ((labelOffset?.dy || -22) < 0 ? -3 : 3) : 0)})`}>
                 <rect
                   x="-42"
                   y="-14"

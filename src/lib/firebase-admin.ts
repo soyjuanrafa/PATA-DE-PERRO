@@ -2,11 +2,16 @@ import { initializeApp, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
 
-if (!getApps().length) {
-  // Read the projectId directly from firebase-applet-config.json
-  initializeApp({
-    projectId: firebaseConfig.projectId,
-  });
+const projectId = process.env.FIREBASE_PROJECT_ID || firebaseConfig?.projectId;
+
+if (!getApps().length && projectId && projectId !== 'your-firebase-project-id') {
+  try {
+    initializeApp({
+      projectId,
+    });
+  } catch (err) {
+    console.warn('Firebase admin initialization deferred:', err);
+  }
 }
 
-export const adminAuth = getAuth();
+export const adminAuth = getApps().length ? getAuth() : null;

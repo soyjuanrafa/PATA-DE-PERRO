@@ -1,5 +1,5 @@
 # Dockerfile - Pata de Perro Application
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -7,16 +7,19 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm ci || npm install
 
 # Copy source code
 COPY . .
+
+# Ensure Firebase config exists for build
+RUN if [ ! -f firebase-applet-config.json ]; then cp firebase-applet-config.example.json firebase-applet-config.json; fi
 
 # Build application
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
 
@@ -30,4 +33,5 @@ COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]
+

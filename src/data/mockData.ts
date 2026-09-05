@@ -345,7 +345,62 @@ export const INITIAL_EXPERIENCES: Experiencia[] = [
 
 export const INITIAL_USER: Turista | null = null;
 
-export const INITIAL_ACCOUNTS: UserAccount[] = [];
+export const INITIAL_ACCOUNTS: UserAccount[] = [
+  {
+    id_usuario: 'demo-turista-evaluador',
+    nombre: 'Evaluador Turista',
+    correo: 'turista@patadeperro.ni',
+    password: 'Turista2026!',
+    role: UserRole.TURISTA,
+    isDev: false,
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+    telefono: '+505 8888 1234',
+    pais: 'Nicaragua',
+    departamento: 'León',
+    ciudad: 'León',
+    bio: 'Cuenta de evaluación para jurado y evaluadores con perfil de viajero.',
+    savedExperienceIds: ['exp_tierra_01', 'exp_agua_01'],
+    reservas: [],
+    fechaRegistro: '2026-01-15',
+    ultimoAcceso: new Date().toISOString(),
+  },
+  {
+    id_usuario: 'demo-anfitrion-evaluador',
+    nombre: 'Anfitrión Comunitario',
+    correo: 'anfitrion@patadeperro.ni',
+    password: 'Anfitrion2026!',
+    role: UserRole.ANFITRION,
+    isDev: false,
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80',
+    telefono: '+505 8765 4321',
+    pais: 'Nicaragua',
+    departamento: 'Granada',
+    ciudad: 'Granada',
+    bio: 'Cuenta demo para evaluación de publicación de experiencias y gestión de reservas.',
+    savedExperienceIds: [],
+    reservas: [],
+    fechaRegistro: '2026-01-10',
+    ultimoAcceso: new Date().toISOString(),
+  },
+  {
+    id_usuario: 'demo-admin-evaluador',
+    nombre: 'Comité Evaluador / Auditor',
+    correo: 'admin@patadeperro.ni',
+    password: 'Admin2026!',
+    role: UserRole.DESARROLLADOR,
+    isDev: true,
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80',
+    telefono: '+505 8999 0000',
+    pais: 'Nicaragua',
+    departamento: 'Managua',
+    ciudad: 'Managua',
+    bio: 'Cuenta de auditoría técnica con acceso a herramientas de desarrollo, SQL y pruebas unitarias.',
+    savedExperienceIds: ['exp_tierra_01', 'exp_tierra_02', 'exp_agua_01'],
+    reservas: [],
+    fechaRegistro: '2026-01-01',
+    ultimoAcceso: new Date().toISOString(),
+  },
+];
 
 export const INITIAL_RESERVATIONS: Reserva[] = [];
 
